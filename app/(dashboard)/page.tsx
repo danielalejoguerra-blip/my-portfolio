@@ -8,9 +8,9 @@ import {
   Footer,
 } from "@/app/components/shared";
 
-export default function Home() {
+export default function PortfolioPage() {
   return (
-    <main className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="flex flex-col">
       <Hero />
       <About />
       <Skills />
@@ -21,3 +21,4 @@ export default function Home() {
     </main>
   );
 }
+

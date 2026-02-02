@@ -1,0 +1,160 @@
+{
+  "hero": {
+    "greeting": "Hi! I'm",
+    "role": "Full Stack Developer",
+    "description": "Passionate developer creating exceptional digital experiences. Specialized in <react>React</react>, <nodejs>Node.js</nodejs> and <typescript>TypeScript</typescript>.",
+    "viewProjects": "View Projects",
+    "contactMe": "Contact Me"
+  },
+  "about": {
+    "title": "About Me",
+    "subtitle": "Learn more about my journey and what drives me",
+    "location": "Sogamoso, Boyacá",
+    "experience": "Systems Engineer",
+    "available": "Available",
+    "description1": "I'm a <role>Systems and Computer Engineer</role> (graduated with honors) from UPTC. Full-stack web developer with strong focus on React, TypeScript, Node.js and Python.",
+    "description2": "Currently working at <company>Grupo Recupera</company>, where I develop full-stack web applications for internal process optimization, including CRM solutions and AI-based audit systems.",
+    "description3": "Experience in CRM development, automation and AI-based voice analysis, focused on performance and business value.",
+    "stats": {
+      "years": "Years of experience",
+      "projects": "Completed projects",
+      "technologies": "Technologies mastered",
+      "commitment": "Commitment"
+    }
+  },
+  "skills": {
+    "title": "Skills",
+    "subtitle": "Technologies and tools I work with daily",
+    "categories": {
+      "frontend": "Frontend",
+      "backend": "Backend",
+      "databases": "Databases",
+      "tools": "Tools"
+    }
+  },
+  "experience": {
+    "title": "Experience",
+    "subtitle": "My professional journey and growth in development",
+    "current": "Current",
+    "jobs": {
+      "job1": {
+        "title": "Full Stack Web Developer",
+        "company": "Grupo Recupera",
+        "period": "2025 - Present",
+        "description": "Development of full-stack web applications for internal process optimization. Custom CRM solution (+30% productivity). AI-based call audit system (+25% service quality, -75% manual workload). Technologies: React, TypeScript, Node.js, Python, Docker, AWS."
+      }
+    }
+  },
+  "education": {
+    "title": "Education",
+    "subtitle": "My academic background",
+    "items": {
+      "edu1": {
+        "degree": "Systems and Computer Engineering",
+        "institution": "UPTC Sogamoso",
+        "period": "2020 - 2025",
+        "description": "Honors Degree. Comprehensive training in software development, databases, systems architecture and agile methodologies."
+      },
+      "edu2": {
+        "degree": "Technical High School in Marketing",
+        "institution": "I.E. José Ignacio de Márquez",
+        "period": "2013 - 2019",
+        "description": "Training in commercial and technological skills."
+      }
+    }
+  },
+  "certifications": {
+    "title": "Certifications",
+    "subtitle": "Courses and certifications that complement my training",
+    "items": {
+      "cert1": {
+        "name": "Complete Web Development",
+        "platform": "Udemy",
+        "year": "2024"
+      },
+      "cert2": {
+        "name": "React + TypeScript",
+        "platform": "Udemy",
+        "year": "2024"
+      },
+      "cert3": {
+        "name": "Java University - Zero to Expert",
+        "platform": "Udemy",
+        "year": "2024"
+      }
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Some of the projects I've worked on",
+    "featured": "Featured",
+    "items": {
+      "project1": {
+        "title": "Custom CRM",
+        "description": "Complete CRM solution that increased productivity by +30% with centralized client management. Built with React, TypeScript and Node.js."
+      },
+      "project2": {
+        "title": "AI Audit System",
+        "description": "AI-based call audit system. +25% improvement in service quality and 75% reduction in manual workload."
+      },
+      "project3": {
+        "title": "Scalable REST API",
+        "description": "Complete backend API with JWT authentication, user roles, and scalable architecture. Technologies: Node.js, Express, PostgreSQL."
+      },
+      "project4": {
+        "title": "Analytics Dashboard",
+        "description": "Data analysis panel with interactive charts, advanced filters and real-time report export."
+      },
+      "project5": {
+        "title": "Process Automation",
+        "description": "Python scripts and automation tools for enterprise workflow optimization."
+      },
+      "project6": {
+        "title": "Personal Portfolio",
+        "description": "This website, built with Next.js, TypeScript, Tailwind CSS and modern development best practices."
+      }
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Have a project in mind? Let's talk!",
+    "connect": "Let's Connect",
+    "connectDescription": "I'm always open to new opportunities, interesting collaborations or just a good conversation about technology.",
+    "sendMessage": "Send me a message",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "you@email.com",
+      "message": "Message",
+      "messagePlaceholder": "How can I help you?",
+      "submit": "Send message",
+      "send": "Send",
+      "sending": "Sending...",
+      "success": "Message sent! I'll get back to you soon."
+    },
+    "info": {
+      "email": "Email",
+      "location": "Location",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    }
+  },
+  "footer": {
+    "madeWith": "Made with",
+    "in": "in Colombia",
+    "location": "in Colombia",
+    "rights": "All rights reserved"
+  },
+  "nav": {
+    "about": "About",
+    "skills": "Skills",
+    "experience": "Experience",
+    "projects": "Projects",
+    "contact": "Contact"
+  },
+  "languageSelector": {
+    "es": "Español",
+    "en": "English"
+  }
+}

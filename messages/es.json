@@ -1,0 +1,160 @@
+{
+  "hero": {
+    "greeting": "¡Hola! Soy",
+    "role": "Desarrollador Full Stack",
+    "description": "Desarrollador apasionado por crear experiencias digitales excepcionales. Especializado en <react>React</react>, <nodejs>Node.js</nodejs> y <typescript>TypeScript</typescript>.",
+    "viewProjects": "Ver Proyectos",
+    "contactMe": "Contáctame"
+  },
+  "about": {
+    "title": "Sobre Mí",
+    "subtitle": "Conoce más sobre mi trayectoria y lo que me apasiona",
+    "location": "Sogamoso, Boyacá",
+    "experience": "Ingeniero de Sistemas",
+    "available": "Disponible",
+    "description1": "Soy <role>Ingeniero de Sistemas y Computación</role> (graduado con honores) de la UPTC. Desarrollador web full-stack con fuerte enfoque en React, TypeScript, Node.js y Python.",
+    "description2": "Actualmente trabajo en <company>Grupo Recupera</company>, donde desarrollo aplicaciones web full-stack para optimización de procesos internos, incluyendo soluciones CRM y sistemas de auditoría basados en IA.",
+    "description3": "Experiencia en desarrollo de CRM, automatización y análisis de voz basado en inteligencia artificial, orientado al rendimiento y al valor de negocio.",
+    "stats": {
+      "years": "Años de experiencia",
+      "projects": "Proyectos completados",
+      "technologies": "Tecnologías dominadas",
+      "commitment": "Compromiso"
+    }
+  },
+  "skills": {
+    "title": "Habilidades",
+    "subtitle": "Tecnologías y herramientas con las que trabajo día a día",
+    "categories": {
+      "frontend": "Frontend",
+      "backend": "Backend",
+      "databases": "Bases de Datos",
+      "tools": "Herramientas"
+    }
+  },
+  "experience": {
+    "title": "Experiencia",
+    "subtitle": "Mi trayectoria profesional y crecimiento en el desarrollo",
+    "current": "Actual",
+    "jobs": {
+      "job1": {
+        "title": "Desarrollador Web Full Stack",
+        "company": "Grupo Recupera",
+        "period": "2025 - Presente",
+        "description": "Desarrollo de aplicaciones web full-stack para optimización de procesos internos. Solución CRM personalizada (+30% productividad). Sistema de auditoría de llamadas basado en IA (+25% calidad del servicio, -75% carga manual). Tecnologías: React, TypeScript, Node.js, Python, Docker, AWS."
+      }
+    }
+  },
+  "education": {
+    "title": "Educación",
+    "subtitle": "Mi formación académica",
+    "items": {
+      "edu1": {
+        "degree": "Ingeniería de Sistemas y Computación",
+        "institution": "UPTC Sogamoso",
+        "period": "2020 - 2025",
+        "description": "Grado de Honor. Formación integral en desarrollo de software, bases de datos, arquitectura de sistemas y metodologías ágiles."
+      },
+      "edu2": {
+        "degree": "Bachiller Técnico en Mercadeo",
+        "institution": "I.E. José Ignacio de Márquez",
+        "period": "2013 - 2019",
+        "description": "Formación en competencias comerciales y tecnológicas."
+      }
+    }
+  },
+  "certifications": {
+    "title": "Certificaciones",
+    "subtitle": "Cursos y certificaciones que complementan mi formación",
+    "items": {
+      "cert1": {
+        "name": "Desarrollo Web Completo",
+        "platform": "Udemy",
+        "year": "2024"
+      },
+      "cert2": {
+        "name": "React + TypeScript",
+        "platform": "Udemy",
+        "year": "2024"
+      },
+      "cert3": {
+        "name": "Universidad Java - Cero a Experto",
+        "platform": "Udemy",
+        "year": "2024"
+      }
+    }
+  },
+  "projects": {
+    "title": "Proyectos",
+    "subtitle": "Algunos de los proyectos en los que he trabajado",
+    "featured": "Destacado",
+    "items": {
+      "project1": {
+        "title": "CRM Personalizado",
+        "description": "Solución CRM completa que incrementó la productividad en +30% con gestión centralizada de clientes. Desarrollado con React, TypeScript y Node.js."
+      },
+      "project2": {
+        "title": "Sistema de Auditoría con IA",
+        "description": "Sistema de auditoría de llamadas basado en inteligencia artificial. Mejora del +25% en calidad del servicio y reducción del 75% en carga manual."
+      },
+      "project3": {
+        "title": "API REST Escalable",
+        "description": "API backend completa con autenticación JWT, roles de usuario, y arquitectura escalable. Tecnologías: Node.js, Express, PostgreSQL."
+      },
+      "project4": {
+        "title": "Dashboard Analytics",
+        "description": "Panel de análisis de datos con gráficos interactivos, filtros avanzados y exportación de reportes en tiempo real."
+      },
+      "project5": {
+        "title": "Automatización de Procesos",
+        "description": "Scripts y herramientas de automatización con Python para optimización de flujos de trabajo empresariales."
+      },
+      "project6": {
+        "title": "Portfolio Personal",
+        "description": "Este sitio web, construido con Next.js, TypeScript, Tailwind CSS y las mejores prácticas de desarrollo moderno."
+      }
+    }
+  },
+  "contact": {
+    "title": "Contacto",
+    "subtitle": "¿Tienes un proyecto en mente? ¡Hablemos!",
+    "connect": "Conectemos",
+    "connectDescription": "Estoy siempre abierto a nuevas oportunidades, colaboraciones interesantes o simplemente una buena conversación sobre tecnología.",
+    "sendMessage": "Envíame un mensaje",
+    "form": {
+      "name": "Nombre",
+      "namePlaceholder": "Tu nombre",
+      "email": "Email",
+      "emailPlaceholder": "tu@email.com",
+      "message": "Mensaje",
+      "messagePlaceholder": "¿En qué puedo ayudarte?",
+      "submit": "Enviar mensaje",
+      "send": "Enviar",
+      "sending": "Enviando...",
+      "success": "¡Mensaje enviado! Te responderé pronto."
+    },
+    "info": {
+      "email": "Email",
+      "location": "Ubicación",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    }
+  },
+  "footer": {
+    "madeWith": "Hecho con",
+    "in": "en Colombia",
+    "location": "en Colombia",
+    "rights": "Todos los derechos reservados"
+  },
+  "nav": {
+    "about": "Sobre Mí",
+    "skills": "Habilidades",
+    "experience": "Experiencia",
+    "projects": "Proyectos",
+    "contact": "Contacto"
+  },
+  "languageSelector": {
+    "es": "Español",
+    "en": "English"
+  }
+}
