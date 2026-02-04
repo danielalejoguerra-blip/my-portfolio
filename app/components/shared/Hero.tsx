@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+import { ArrowDown, Github, Linkedin, Mail, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import Button from "@/app/components/ui/Button";
 import LanguageSelector from "./LanguageSelector";
 
@@ -11,8 +12,14 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Language selector - fixed position */}
-      <div className="absolute top-6 right-6 z-20">
+      {/* Language selector and Admin button - fixed position */}
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+        <Link href="/login">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <Shield className="w-4 h-4" />
+            Admin
+          </Button>
+        </Link>
         <LanguageSelector />
       </div>
 

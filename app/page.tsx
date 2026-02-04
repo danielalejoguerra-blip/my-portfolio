@@ -1,23 +1,7 @@
-import {
-  Hero,
-  About,
-  Skills,
-  Experience,
-  Projects,
-  Contact,
-  Footer,
-} from "@/app/components/shared";
+import { redirect } from 'next/navigation';
+import { defaultLocale } from '@/app/i18n/config';
 
-export default function Home() {
-  return (
-    <main className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <Hero />
-      <About />
-      <Skills />
-      <Experience />
-      <Projects />
-      <Contact />
-      <Footer />
-    </main>
-  );
+// Redirigir a la página con el locale por defecto
+export default function RootPage() {
+  redirect(`/${defaultLocale}`);
 }

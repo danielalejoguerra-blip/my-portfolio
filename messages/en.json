@@ -156,5 +156,135 @@
   "languageSelector": {
     "es": "Español",
     "en": "English"
+  },
+  "auth": {
+    "login": {
+      "adminBadge": "Admin Access",
+      "title": "Admin Sign In",
+      "subtitle": "Manage users and content with advanced security.",
+      "adminPanel": "Admin panel",
+      "formTitle": "Sign in",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@email.com",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "passwordRequired": "Password is required",
+      "submit": "Sign in",
+      "loading": "Signing in...",
+      "error": "Invalid credentials. Try again.",
+      "adminOnly": "Restricted access for administrators only",
+      "feature1Title": "Centralized management",
+      "feature1Desc": "Manage content and users from a single place.",
+      "feature2Title": "Advanced security",
+      "feature2Desc": "HTTP-only cookies and CSRF protection enabled."
+    },
+    "register": {
+      "badge": "Protected access",
+      "title": "Register admin",
+      "subtitle": "Create new accounts with permissions to manage the panel.",
+      "feature1Title": "Access control",
+      "feature1Desc": "Only authenticated users can create new accounts.",
+      "backToDashboard": "Back to Dashboard",
+      "formBadge": "Registration",
+      "formTitle": "New admin user"
+    },
+    "registerForm": {
+      "requiredInfo": "Required information",
+      "optionalInfo": "Additional information (optional)",
+      "toggleShow": "▶ Show optional fields",
+      "toggleHide": "▼ Hide optional fields",
+      "passwordHelper": "Minimum 8 characters with uppercase, lowercase and a number",
+      "submit": "Register user",
+      "loading": "Registering...",
+      "success": "User registered successfully",
+      "fields": {
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm password",
+        "fullName": "Full name",
+        "bio": "Bio",
+        "location": "Location",
+        "website": "Website",
+        "company": "Company"
+      },
+      "placeholders": {
+        "username": "johndoe",
+        "email": "user@email.com",
+        "password": "••••••••",
+        "confirmPassword": "••••••••",
+        "fullName": "John Doe",
+        "bio": "A short description...",
+        "location": "City, Country",
+        "website": "https://mywebsite.com",
+        "company": "My Company"
+      },
+      "errors": {
+        "usernameRequired": "Username is required",
+        "usernameMin": "Username must be at least 3 characters",
+        "usernameMax": "Username cannot exceed 30 characters",
+        "usernamePattern": "Only letters, numbers and underscores",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordPattern": "Must include uppercase, lowercase and a number",
+        "confirmRequired": "Confirm your password",
+        "passwordMatch": "Passwords do not match",
+        "bioMax": "Maximum 500 characters",
+        "locationMax": "Maximum 100 characters",
+        "websiteInvalid": "Invalid URL",
+        "companyMax": "Maximum 100 characters",
+        "serverError": "Error registering user. Try again."
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": {
+      "loading": "Loading...",
+      "adminPanel": "Admin Panel",
+      "signOut": "Sign out",
+      "welcomeBadge": "Welcome",
+      "welcomeTitle": "Welcome, {name}! 👋",
+      "welcomeSubtitle": "Portfolio control and administration panel.",
+      "fallbackName": "Admin",
+      "sessionTitle": "Session",
+      "sessionActive": "Active session",
+      "sessionHint": "Last successful access",
+      "actions": {
+        "dashboardTitle": "Dashboard",
+        "dashboardSubtitle": "View statistics",
+        "dashboardDesc": "Access the main panel with portfolio metrics and data.",
+        "registerTitle": "Register user",
+        "registerSubtitle": "Create new account",
+        "registerDesc": "Add new admins to manage the portfolio.",
+        "usersTitle": "Manage users",
+        "usersSubtitle": "Admin accounts",
+        "usersDesc": "View and manage the registered users in the system."
+      },
+      "system": {
+        "title": "System status",
+        "cta": "View users",
+        "backendTitle": "API Backend",
+        "backendStatus": "Operational",
+        "authTitle": "Authentication",
+        "authStatus": "HTTP-only cookies active",
+        "activityTitle": "Last activity",
+        "activityStatus": "A few seconds ago"
+      }
+    }
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Manage accounts and permissions for the panel.",
+    "addUser": "Add user",
+    "searchPlaceholder": "Search by name or email...",
+    "filterLabel": "Filter:",
+    "filterAll": "All",
+    "emptyTitle": "No users to show",
+    "emptyDescription": "You haven't registered additional users yet. Create a new admin to get started.",
+    "emptyCta": "Create first user"
   }
 }
