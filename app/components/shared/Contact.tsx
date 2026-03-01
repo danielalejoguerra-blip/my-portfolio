@@ -5,8 +5,13 @@ import { motion } from "framer-motion";
 import { Mail, MapPin, Send, Linkedin, Github, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Card, Button } from "@/app/components/ui";
+import type { PersonalInfo } from "@/types";
 
-export default function Contact() {
+interface ContactProps {
+  personalInfo?: PersonalInfo | null;
+}
+
+export default function Contact({ personalInfo }: ContactProps) {
   const t = useTranslations("contact");
   
   const [formData, setFormData] = useState({
@@ -26,30 +31,38 @@ export default function Contact() {
     alert(t("form.success"));
   };
 
+  const socialLinks = personalInfo?.social_links || {};
+  const emailAddress = personalInfo?.email || "danielalejoguerra@gmail.com";
+  const locationValue = personalInfo?.location || "Sogamoso, Boyacá - Colombia";
+  const linkedinUrl = socialLinks.linkedin || "https://linkedin.com/in/daniel-guerra-197551301";
+  const linkedinDisplay = linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com/, "");
+  const githubUrl = socialLinks.github || "https://github.com/DanielWar01";
+  const githubDisplay = `@${githubUrl.split("/").pop() || "DanielWar01"}`;
+
   const contactInfo = [
     {
       icon: Mail,
       label: t("info.email"),
-      value: "danielalejoguerra@gmail.com",
-      href: "mailto:danielalejoguerra@gmail.com",
+      value: emailAddress,
+      href: `mailto:${emailAddress}`,
     },
     {
       icon: MapPin,
       label: t("info.location"),
-      value: "Sogamoso, Boyacá - Colombia",
+      value: locationValue,
       href: null,
     },
     {
       icon: Linkedin,
       label: t("info.linkedin"),
-      value: "/in/daniel-guerra-197551301",
-      href: "https://linkedin.com/in/daniel-guerra-197551301",
+      value: linkedinDisplay,
+      href: linkedinUrl,
     },
     {
       icon: Github,
       label: t("info.github"),
-      value: "@DanielWar01",
-      href: "https://github.com/DanielWar01",
+      value: githubDisplay,
+      href: githubUrl,
     },
   ];
 

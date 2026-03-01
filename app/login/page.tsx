@@ -5,17 +5,33 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
-import { Shield, Mail, Lock, Loader2, AlertCircle, Sparkles, ShieldCheck, Globe } from 'lucide-react';
-import Card from '@/app/components/ui/Card';
-import Button from '@/app/components/ui/Button';
 import { authService } from '@/services';
+
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
+import InputAdornment from '@mui/material/InputAdornment';
+
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
+import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
+import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Schema de validación con traducciones
   const loginSchema = z.object({
     email: z.string().min(1, t('emailRequired')).email(t('emailInvalid')),
     password: z.string().min(1, t('passwordRequired')),
@@ -34,14 +50,10 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const result = await authService.login(data);
-      console.log('Login exitoso:', result);
-      // Usar window.location para forzar recarga completa con cookies
+      await authService.login(data);
       window.location.href = '/dashboard/welcome';
-    } catch (err) {
-      console.error('Error de login:', err);
+    } catch {
       setError(t('error'));
     } finally {
       setIsLoading(false);
@@ -49,130 +61,136 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
-        {/* Fondo decorativo */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[var(--primary)]/10 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[var(--accent)]/10 blur-3xl" />
-        </div>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+        py: 6,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Decorative background blobs */}
+      <Box sx={{ position: 'absolute', top: -160, right: -160, width: 384, height: 384, borderRadius: '50%', bgcolor: 'primary.main', opacity: 0.06, filter: 'blur(80px)', pointerEvents: 'none' }} />
+      <Box sx={{ position: 'absolute', bottom: -160, left: -160, width: 384, height: 384, borderRadius: '50%', bgcolor: 'secondary.main', opacity: 0.06, filter: 'blur(80px)', pointerEvents: 'none' }} />
 
-        <div className="relative w-full max-w-5xl grid gap-6 md:grid-cols-2">
-          <Card variant="glass" className="p-8 md:p-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
-              </div>
-              <span className="text-sm font-semibold text-[var(--muted-foreground)]">
-                {t('adminBadge')}
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              {t('title')}
-            </h1>
-            <p className="text-[var(--muted-foreground)] text-lg mb-8">
-              {t('subtitle')}
-            </p>
+      <Grid container spacing={3} sx={{ maxWidth: 960, position: 'relative', zIndex: 1 }}>
+        {/* Left: features panel */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card variant="outlined" sx={{ height: '100%', borderRadius: 4 }}>
+            <CardContent sx={{ p: { xs: 4, md: 5 } }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+                <Avatar sx={{ width: 44, height: 44, bgcolor: 'rgba(59,130,246,0.1)' }}>
+                  <VerifiedUserRoundedIcon sx={{ color: 'primary.main' }} />
+                </Avatar>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                  {t('adminBadge')}
+                </Typography>
+              </Stack>
+              <Typography variant="h4" fontWeight={700} sx={{ mb: 1 }}>{t('title')}</Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 5 }}>{t('subtitle')}</Typography>
 
-            <div className="grid gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-[var(--primary)]" />
-                </div>
-                <div>
-                  <p className="font-medium">{t('feature1Title')}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    {t('feature1Desc')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-[var(--accent)]" />
-                </div>
-                <div>
-                  <p className="font-medium">{t('feature2Title')}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    {t('feature2Desc')}
-                  </p>
-                </div>
-              </div>
-            </div>
+              <Stack spacing={2.5}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Avatar sx={{ width: 40, height: 40, bgcolor: 'rgba(59,130,246,0.1)' }}>
+                    <AutoAwesomeRoundedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle2">{t('feature1Title')}</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('feature1Desc')}</Typography>
+                  </Box>
+                </Stack>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Avatar sx={{ width: 40, height: 40, bgcolor: 'rgba(139,92,246,0.1)' }}>
+                    <LanguageRoundedIcon sx={{ color: 'secondary.main', fontSize: 20 }} />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle2">{t('feature2Title')}</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('feature2Desc')}</Typography>
+                  </Box>
+                </Stack>
+              </Stack>
+            </CardContent>
           </Card>
+        </Grid>
 
-          <Card variant="glass" className="p-8 md:p-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-[var(--primary)]" />
-              </div>
-              <div>
-                <p className="text-sm text-[var(--muted-foreground)]">{t('adminPanel')}</p>
-                <h2 className="text-xl font-semibold">{t('formTitle')}</h2>
-              </div>
-            </div>
+        {/* Right: login form */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card variant="outlined" sx={{ height: '100%', borderRadius: 4 }}>
+            <CardContent sx={{ p: { xs: 4, md: 5 } }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+                <Avatar sx={{ width: 48, height: 48, bgcolor: 'rgba(59,130,246,0.1)' }}>
+                  <SecurityRoundedIcon sx={{ color: 'primary.main' }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">{t('adminPanel')}</Typography>
+                  <Typography variant="h6" fontWeight={600}>{t('formTitle')}</Typography>
+                </Box>
+              </Stack>
 
-            {error && (
-              <div className="flex items-center gap-3 p-4 mb-6 rounded-lg bg-red-500/10 border border-red-500/20">
-                <AlertCircle className="w-5 h-5 text-red-400" />
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
+              {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
-                  {t('emailLabel')}
-                </label>
-                <div className="relative">
-                  <input
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <Stack spacing={3}>
+                  <TextField
+                    fullWidth
+                    label={t('emailLabel')}
                     type="email"
                     placeholder={t('emailPlaceholder')}
-                    className="w-full px-4 py-3 pr-12 bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <EmailRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                     {...register('email')}
                   />
-                  <Mail className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--muted-foreground)]" />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-red-400 mt-1">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
-                  {t('passwordLabel')}
-                </label>
-                <div className="relative">
-                  <input
+                  <TextField
+                    fullWidth
+                    label={t('passwordLabel')}
                     type="password"
                     placeholder={t('passwordPlaceholder')}
-                    className="w-full px-4 py-3 pr-12 bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <LockRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                     {...register('password')}
                   />
-                  <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--muted-foreground)]" />
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-red-400 mt-1">{errors.password.message}</p>
-                )}
-              </div>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={isLoading}
+                    startIcon={isLoading ? <CircularProgress size={18} /> : undefined}
+                  >
+                    {isLoading ? t('loading') : t('submit')}
+                  </Button>
+                </Stack>
+              </form>
 
-              <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    {t('loading')}
-                  </>
-                ) : (
-                  t('submit')
-                )}
-              </Button>
-            </form>
-
-            <p className="text-center text-sm text-[var(--muted-foreground)] mt-6">
-              {t('adminOnly')}
-            </p>
+              <Typography variant="caption" display="block" textAlign="center" color="text.secondary" sx={{ mt: 3 }}>
+                {t('adminOnly')}
+              </Typography>
+            </CardContent>
           </Card>
-        </div>
-      </div>
-    </main>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }

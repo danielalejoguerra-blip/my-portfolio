@@ -1,78 +1,96 @@
 'use client';
 
 import { RegisterForm } from '@/app/components/forms';
-import Card from '@/app/components/ui/Card';
-import Button from '@/app/components/ui/Button';
-import { UserPlus, ArrowLeft, Sparkles, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
+
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register');
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
-        {/* Fondo decorativo */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[var(--primary)]/10 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[var(--accent)]/10 blur-3xl" />
-        </div>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+        py: 6,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <Box sx={{ position: 'absolute', top: -160, right: -160, width: 384, height: 384, borderRadius: '50%', bgcolor: 'primary.main', opacity: 0.06, filter: 'blur(80px)', pointerEvents: 'none' }} />
+      <Box sx={{ position: 'absolute', bottom: -160, left: -160, width: 384, height: 384, borderRadius: '50%', bgcolor: 'secondary.main', opacity: 0.06, filter: 'blur(80px)', pointerEvents: 'none' }} />
 
-        <div className="relative w-full max-w-6xl grid gap-6 lg:grid-cols-[1.1fr_1.3fr]">
-          <Card variant="glass" className="p-8 md:p-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
-              </div>
-              <div>
-                <p className="text-sm text-[var(--muted-foreground)]">{t('badge')}</p>
-                <h1 className="text-2xl md:text-3xl font-bold">{t('title')}</h1>
-              </div>
-            </div>
-            <p className="text-[var(--muted-foreground)] text-lg mb-8">
-              {t('subtitle')}
-            </p>
+      <Grid container spacing={3} sx={{ maxWidth: 1100, position: 'relative', zIndex: 1 }}>
+        {/* Left panel */}
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card variant="outlined" sx={{ height: '100%', borderRadius: 4 }}>
+            <CardContent sx={{ p: { xs: 4, md: 5 }, display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+                <Avatar sx={{ width: 48, height: 48, bgcolor: 'rgba(59,130,246,0.1)' }}>
+                  <VerifiedUserRoundedIcon sx={{ color: 'primary.main' }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">{t('badge')}</Typography>
+                  <Typography variant="h5" fontWeight={700}>{t('title')}</Typography>
+                </Box>
+              </Stack>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 5 }}>{t('subtitle')}</Typography>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-[var(--primary)]" />
-                </div>
-                <div>
-                  <p className="font-medium">{t('feature1Title')}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    {t('feature1Desc')}
-                  </p>
-                </div>
-              </div>
-            </div>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Avatar sx={{ width: 40, height: 40, bgcolor: 'rgba(59,130,246,0.1)' }}>
+                  <AutoAwesomeRoundedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle2">{t('feature1Title')}</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('feature1Desc')}</Typography>
+                </Box>
+              </Stack>
 
-            <div className="mt-8">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
+              <Box sx={{ mt: 'auto', pt: 4 }}>
+                <Button component={Link} href="/dashboard" startIcon={<ArrowBackRoundedIcon />} size="small">
                   {t('backToDashboard')}
                 </Button>
-              </Link>
-            </div>
+              </Box>
+            </CardContent>
           </Card>
+        </Grid>
 
-          <Card variant="glass" className="p-8 md:p-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-[var(--primary)]" />
-              </div>
-              <div>
-                <p className="text-sm text-[var(--muted-foreground)]">{t('formBadge')}</p>
-                <h2 className="text-xl font-semibold">{t('formTitle')}</h2>
-              </div>
-            </div>
+        {/* Right: register form */}
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Card variant="outlined" sx={{ borderRadius: 4 }}>
+            <CardContent sx={{ p: { xs: 4, md: 5 } }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+                <Avatar sx={{ width: 48, height: 48, bgcolor: 'rgba(59,130,246,0.1)' }}>
+                  <PersonAddRoundedIcon sx={{ color: 'primary.main' }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">{t('formBadge')}</Typography>
+                  <Typography variant="h6" fontWeight={600}>{t('formTitle')}</Typography>
+                </Box>
+              </Stack>
 
-            <RegisterForm />
+              <RegisterForm />
+            </CardContent>
           </Card>
-        </div>
-      </div>
-    </main>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }

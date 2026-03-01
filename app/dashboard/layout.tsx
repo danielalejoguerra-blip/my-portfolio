@@ -1,6 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { defaultLocale } from '@/app/i18n/config';
 import { AuthProvider } from '@/hooks';
+import ThemeRegistry from '@/app/theme/ThemeRegistry';
+import { DashboardShell } from './_components';
 
 async function getMessages() {
 	return (await import(`../../messages/${defaultLocale}.json`)).default;
@@ -16,9 +18,11 @@ export default async function DashboardLayout({
 	return (
 		<NextIntlClientProvider locale={defaultLocale} messages={messages}>
 			<AuthProvider>
-				<div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-					{children}
-				</div>
+				<ThemeRegistry>
+					<DashboardShell>
+						{children}
+					</DashboardShell>
+				</ThemeRegistry>
 			</AuthProvider>
 		</NextIntlClientProvider>
 	);

@@ -1,19 +1,29 @@
 'use client';
 
-// ============================================
-// RegisterForm - Formulario de registro
-// Solo accesible para usuarios autenticados
-// ============================================
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks';
-import FormInput from './FormInput';
-import Button from '@/app/components/ui/Button';
-import { User, Mail, Lock, Loader2, AlertCircle, CheckCircle, Building, MapPin, Globe, FileText } from 'lucide-react';
+
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import InputAdornment from '@mui/material/InputAdornment';
+import Collapse from '@mui/material/Collapse';
+import Paper from '@mui/material/Paper';
+
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
+import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 
 export default function RegisterForm() {
   const t = useTranslations('auth.registerForm');
@@ -22,7 +32,6 @@ export default function RegisterForm() {
   const [success, setSuccess] = useState(false);
   const [showOptional, setShowOptional] = useState(false);
 
-  // Schema de validación con traducciones
   const registerSchema = z.object({
     username: z
       .string()
@@ -75,16 +84,12 @@ export default function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     setServerError(null);
     setSuccess(false);
-    
     try {
-      // Remover confirmPassword antes de enviar
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...registerData } = data;
-      
-      // Limpiar campos opcionales vacíos
       const cleanData = Object.fromEntries(
         Object.entries(registerData).filter(([, value]) => value !== '')
       );
-      
       await registerUser(cleanData as typeof registerData);
       setSuccess(true);
       reset();
@@ -97,177 +102,141 @@ export default function RegisterForm() {
     }
   };
 
+  const endAdornment = (icon: React.ReactNode) => (
+    <InputAdornment position="end">{icon}</InputAdornment>
+  );
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Mensaje de éxito */}
-      {success && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-          <p className="text-sm text-green-400">
-            {t('success')}
-          </p>
-        </div>
-      )}
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Stack spacing={3}>
+        {success && <Alert severity="success">{t('success')}</Alert>}
+        {serverError && <Alert severity="error">{serverError}</Alert>}
 
-      {/* Error del servidor */}
-      {serverError && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-400">{serverError}</p>
-        </div>
-      )}
+        {/* Required fields */}
+        <Typography variant="overline" color="text.secondary">{t('requiredInfo')}</Typography>
 
-      {/* Campos requeridos */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
-          {t('requiredInfo')}
-        </h3>
+        <TextField
+          fullWidth
+          label={t('fields.username')}
+          placeholder={t('placeholders.username')}
+          error={!!errors.username}
+          helperText={errors.username?.message}
+          slotProps={{ input: { endAdornment: endAdornment(<PersonRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />) } }}
+          {...register('username')}
+        />
+        <TextField
+          fullWidth
+          label={t('fields.email')}
+          type="email"
+          placeholder={t('placeholders.email')}
+          error={!!errors.email}
+          helperText={errors.email?.message}
+          slotProps={{ input: { endAdornment: endAdornment(<EmailRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />) } }}
+          {...register('email')}
+        />
+        <TextField
+          fullWidth
+          label={t('fields.password')}
+          type="password"
+          placeholder={t('placeholders.password')}
+          error={!!errors.password}
+          helperText={errors.password?.message || t('passwordHelper')}
+          slotProps={{ input: { endAdornment: endAdornment(<LockRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />) } }}
+          {...register('password')}
+        />
+        <TextField
+          fullWidth
+          label={t('fields.confirmPassword')}
+          type="password"
+          placeholder={t('placeholders.confirmPassword')}
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword?.message}
+          slotProps={{ input: { endAdornment: endAdornment(<LockRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />) } }}
+          {...register('confirmPassword')}
+        />
 
-        {/* Username */}
-        <div className="relative">
-          <FormInput
-            label={t('fields.username')}
-            type="text"
-            placeholder={t('placeholders.username')}
-            error={errors.username?.message}
-            {...register('username')}
-          />
-          <User className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-        </div>
+        {/* Toggle optional fields */}
+        <Button
+          type="button"
+          variant="text"
+          size="small"
+          onClick={() => setShowOptional(!showOptional)}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          {showOptional ? t('toggleHide') : t('toggleShow')}
+        </Button>
 
-        {/* Email */}
-        <div className="relative">
-          <FormInput
-            label={t('fields.email')}
-            type="email"
-            placeholder={t('placeholders.email')}
-            error={errors.email?.message}
-            {...register('email')}
-          />
-          <Mail className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-        </div>
+        {/* Optional fields */}
+        <Collapse in={showOptional}>
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+            <Stack spacing={2.5}>
+              <Typography variant="overline" color="text.secondary">{t('optionalInfo')}</Typography>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('fields.fullName')}
+                placeholder={t('placeholders.fullName')}
+                error={!!errors.full_name}
+                helperText={errors.full_name?.message}
+                slotProps={{ input: { endAdornment: endAdornment(<PersonRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />) } }}
+                {...register('full_name')}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('fields.bio')}
+                placeholder={t('placeholders.bio')}
+                error={!!errors.bio}
+                helperText={errors.bio?.message}
+                slotProps={{ input: { endAdornment: endAdornment(<DescriptionRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />) } }}
+                {...register('bio')}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('fields.location')}
+                placeholder={t('placeholders.location')}
+                error={!!errors.location}
+                helperText={errors.location?.message}
+                slotProps={{ input: { endAdornment: endAdornment(<PlaceRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />) } }}
+                {...register('location')}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('fields.website')}
+                placeholder={t('placeholders.website')}
+                error={!!errors.website}
+                helperText={errors.website?.message}
+                slotProps={{ input: { endAdornment: endAdornment(<LanguageRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />) } }}
+                {...register('website')}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('fields.company')}
+                placeholder={t('placeholders.company')}
+                error={!!errors.company}
+                helperText={errors.company?.message}
+                slotProps={{ input: { endAdornment: endAdornment(<BusinessRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />) } }}
+                {...register('company')}
+              />
+            </Stack>
+          </Paper>
+        </Collapse>
 
-        {/* Password */}
-        <div className="relative">
-          <FormInput
-            label={t('fields.password')}
-            type="password"
-            placeholder={t('placeholders.password')}
-            error={errors.password?.message}
-            helperText={t('passwordHelper')}
-            {...register('password')}
-          />
-          <Lock className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-        </div>
-
-        {/* Confirm Password */}
-        <div className="relative">
-          <FormInput
-            label={t('fields.confirmPassword')}
-            type="password"
-            placeholder={t('placeholders.confirmPassword')}
-            error={errors.confirmPassword?.message}
-            {...register('confirmPassword')}
-          />
-          <Lock className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-        </div>
-      </div>
-
-      {/* Toggle campos opcionales */}
-      <button
-        type="button"
-        onClick={() => setShowOptional(!showOptional)}
-        className="text-sm text-[var(--primary)] hover:underline"
-      >
-        {showOptional ? t('toggleHide') : t('toggleShow')}
-      </button>
-
-      {/* Campos opcionales */}
-      {showOptional && (
-        <div className="space-y-4 p-4 rounded-lg bg-[var(--secondary)]/50 border border-[var(--border)]">
-          <h3 className="text-sm font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
-            {t('optionalInfo')}
-          </h3>
-
-          {/* Full Name */}
-          <div className="relative">
-            <FormInput
-              label={t('fields.fullName')}
-              type="text"
-              placeholder={t('placeholders.fullName')}
-              error={errors.full_name?.message}
-              {...register('full_name')}
-            />
-            <User className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-          </div>
-
-          {/* Bio */}
-          <div className="relative">
-            <FormInput
-              label={t('fields.bio')}
-              type="text"
-              placeholder={t('placeholders.bio')}
-              error={errors.bio?.message}
-              {...register('bio')}
-            />
-            <FileText className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-          </div>
-
-          {/* Location */}
-          <div className="relative">
-            <FormInput
-              label={t('fields.location')}
-              type="text"
-              placeholder={t('placeholders.location')}
-              error={errors.location?.message}
-              {...register('location')}
-            />
-            <MapPin className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-          </div>
-
-          {/* Website */}
-          <div className="relative">
-            <FormInput
-              label={t('fields.website')}
-              type="url"
-              placeholder={t('placeholders.website')}
-              error={errors.website?.message}
-              {...register('website')}
-            />
-            <Globe className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-          </div>
-
-          {/* Company */}
-          <div className="relative">
-            <FormInput
-              label={t('fields.company')}
-              type="text"
-              placeholder={t('placeholders.company')}
-              error={errors.company?.message}
-              {...register('company')}
-            />
-            <Building className="absolute right-4 top-10 w-5 h-5 text-[var(--muted-foreground)]" />
-          </div>
-        </div>
-      )}
-
-      {/* Botón Submit */}
-      <Button
-        type="submit"
-        variant="primary"
-        size="lg"
-        className="w-full"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            {t('loading')}
-          </>
-        ) : (
-          t('submit')
-        )}
-      </Button>
+        {/* Submit */}
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          fullWidth
+          disabled={isLoading}
+          startIcon={isLoading ? <CircularProgress size={18} /> : undefined}
+        >
+          {isLoading ? t('loading') : t('submit')}
+        </Button>
+      </Stack>
     </form>
   );
 }

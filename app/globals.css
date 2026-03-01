@@ -82,6 +82,7 @@ body {
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5rem; /* offset for fixed header */
 }
 
 /* Selection */

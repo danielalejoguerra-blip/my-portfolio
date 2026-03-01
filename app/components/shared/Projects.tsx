@@ -4,11 +4,41 @@ import { motion } from "framer-motion";
 import { ExternalLink, Github, Folder } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Card, Badge } from "@/app/components/ui";
+import type { Project } from "@/types";
 
-export default function Projects() {
+// Tipo interno para el render
+interface ProjectItem {
+  title: string;
+  description: string;
+  image: string | null;
+  technologies: string[];
+  github: string | null;
+  live: string | null;
+  featured: boolean;
+}
+
+interface ProjectsProps {
+  projects?: Project[] | null;
+}
+
+export default function Projects({ projects: backendProjects }: ProjectsProps) {
   const t = useTranslations("projects");
 
-  const projects = [
+  // Map backend data → internal render type
+  const fromBackend: ProjectItem[] = (backendProjects || []).map((p) => ({
+    title: p.title,
+    description: p.description || '',
+    image: p.images && p.images.length > 0 ? p.images[0] : null,
+    technologies: Array.isArray((p.metadata as Record<string, unknown>)?.technologies)
+      ? ((p.metadata as Record<string, unknown>).technologies as string[])
+      : [],
+    github: ((p.metadata as Record<string, unknown>)?.github as string) || null,
+    live: ((p.metadata as Record<string, unknown>)?.live as string) || null,
+    featured: ((p.metadata as Record<string, unknown>)?.featured as boolean) || false,
+  }));
+
+  // Fallback: hardcoded i18n projects when backend returns nothing
+  const fallbackProjects: ProjectItem[] = [
     {
       title: t("items.project1.title"),
       description: t("items.project1.description"),
@@ -64,6 +94,9 @@ export default function Projects() {
       featured: false,
     },
   ];
+
+  // Use backend data if available, otherwise fallback
+  const projects = fromBackend.length > 0 ? fromBackend : fallbackProjects;
 
   return (
     <Section

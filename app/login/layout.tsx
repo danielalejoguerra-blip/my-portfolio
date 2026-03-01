@@ -1,5 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { defaultLocale } from '@/app/i18n/config';
+import ThemeRegistry from '@/app/theme/ThemeRegistry';
 
 async function getMessages() {
   return (await import(`../../messages/${defaultLocale}.json`)).default;
@@ -14,7 +15,7 @@ export default async function LoginLayout({
 
   return (
     <NextIntlClientProvider locale={defaultLocale} messages={messages}>
-      {children}
+      <ThemeRegistry>{children}</ThemeRegistry>
     </NextIntlClientProvider>
   );
 }
