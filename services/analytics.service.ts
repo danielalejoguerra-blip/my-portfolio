@@ -24,6 +24,12 @@ const toNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const normalizePageSlug = (slug: string): string => {
+  const trimmed = (slug || '').trim();
+  if (!trimmed || trimmed === '/') return '/home';
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+};
+
 function normalizeSummary(raw: unknown): AnalyticsSummary {
   const data = (raw || {}) as Record<string, unknown>;
 
@@ -154,7 +160,11 @@ export const analyticsService = {
   },
 
   async pageview(params: { page_slug: string; content_type?: string; content_id?: number }): Promise<AnalyticsEvent> {
-    const response = await api.post<AnalyticsEvent>('/analytics/pageview', null, { params });
+    const normalizedParams = {
+      ...params,
+      page_slug: normalizePageSlug(params.page_slug),
+    };
+    const response = await api.post<AnalyticsEvent>('/analytics/pageview', null, { params: normalizedParams });
     return response.data;
   },
 

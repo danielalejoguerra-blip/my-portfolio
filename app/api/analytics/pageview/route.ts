@@ -6,6 +6,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.REACT_API_HOST;
 
+const normalizePageSlug = (slug: string): string => {
+  const trimmed = (slug || '').trim();
+  if (!trimmed || trimmed === '/') return '/home';
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+};
+
 export async function POST(request: NextRequest) {
   try {
     if (!API_URL) {
@@ -13,10 +19,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const pageSlug = searchParams.get('page_slug');
-    if (!pageSlug) {
+    const pageSlugRaw = searchParams.get('page_slug');
+    if (!pageSlugRaw) {
       return NextResponse.json({ message: 'page_slug es requerido' }, { status: 422 });
     }
+
+    const pageSlug = normalizePageSlug(pageSlugRaw);
 
     const qs = new URLSearchParams({ page_slug: pageSlug });
     const contentType = searchParams.get('content_type');

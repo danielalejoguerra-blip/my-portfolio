@@ -110,11 +110,13 @@ function buildSocketConfig() {
   const namespaceRaw = process.env.NEXT_PUBLIC_ANALYTICS_NAMESPACE || '/analytics';
   const namespace = namespaceRaw.startsWith('/') ? namespaceRaw : `/${namespaceRaw}`;
 
-  return { socketUrl, socketPath, namespace };
+  const room = process.env.NEXT_PUBLIC_ANALYTICS_ROOM || 'analytics_admin';
+
+  return { socketUrl, socketPath, namespace, room };
 }
 
 export function connectAnalyticsRealtime(handlers: RealtimeHandlers): () => void {
-  const { socketUrl, socketPath, namespace } = buildSocketConfig();
+  const { socketUrl, socketPath, namespace, room } = buildSocketConfig();
   if (!socketUrl) {
     handlers.onError?.(new Error('Missing analytics socket URL'));
     return () => undefined;
@@ -130,7 +132,13 @@ export function connectAnalyticsRealtime(handlers: RealtimeHandlers): () => void
     reconnectionDelayMax: 5000,
   });
 
-  socket.on('connect', () => handlers.onConnect?.());
+  socket.on('connect', () => {
+    // Backend realtime broadcasts are scoped to analytics_admin room
+    // Keep compatibility with possible join event names.
+    socket.emit('join_room', { room });
+    socket.emit('join', { room });
+    handlers.onConnect?.();
+  });
   socket.on('disconnect', () => handlers.onDisconnect?.());
   socket.on('connect_error', (error) => handlers.onError?.(error));
 
