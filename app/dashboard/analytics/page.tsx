@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks';
-import { analyticsService } from '@/services';
+import { analyticsService, connectAnalyticsRealtime } from '@/services';
 import type {
   AnalyticsSummary,
   TopContentResponse,
@@ -48,6 +48,8 @@ import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
+import WifiRoundedIcon from '@mui/icons-material/WifiRounded';
+import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 
 import { PageHeader } from '../_components';
 
@@ -65,6 +67,12 @@ export default function AnalyticsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [realtimeError, setRealtimeError] = useState<string | null>(null);
+
+  const fetchDataRef = useRef<() => Promise<void>>(async () => undefined);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -88,9 +96,76 @@ export default function AnalyticsPage() {
     }
   }, [days, granularity]);
 
+  fetchDataRef.current = fetchData;
+
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimerRef.current) return;
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      void fetchDataRef.current();
+    }, 900);
+  }, []);
+
   useEffect(() => {
     if (!authLoading) fetchData();
   }, [authLoading, fetchData]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    const disconnect = connectAnalyticsRealtime({
+      onConnect: () => {
+        setRealtimeConnected(true);
+        setRealtimeError(null);
+      },
+      onDisconnect: () => setRealtimeConnected(false),
+      onError: (err) => {
+        setRealtimeConnected(false);
+        const message = err instanceof Error ? err.message : 'Socket connection error';
+        setRealtimeError(message);
+      },
+      onEvent: (event) => {
+        setRecentEvents((prev) => {
+          const deduped = [event, ...prev.filter((item) => item.id !== event.id)];
+          return deduped.slice(0, 20);
+        });
+        scheduleRefresh();
+      },
+      onSummary: (nextSummary) => {
+        setSummary(nextSummary);
+      },
+      onTopContent: (nextTop) => {
+        setTopContent(nextTop);
+      },
+    });
+
+    return () => {
+      disconnect();
+      setRealtimeConnected(false);
+      setRealtimeError(null);
+    };
+  }, [authLoading, scheduleRefresh]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+
+    pollingTimerRef.current = setInterval(() => {
+      void fetchDataRef.current();
+    }, 15000);
+
+    return () => {
+      if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    };
+  }, [authLoading]);
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+    };
+  }, []);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -102,6 +177,20 @@ export default function AnalyticsPage() {
     return new Date(dateStr).toLocaleDateString(undefined, {
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
     });
+  };
+
+  const formatCountryLabel = (country: string | null | undefined) => {
+    if (!country) return 'Unknown';
+    const normalized = country.trim().toLowerCase();
+    if (normalized === 'local') return 'Local';
+    if (normalized === 'unknown') return 'Unknown';
+    return country;
+  };
+
+  const formatContentLabel = (event: AnalyticsEvent) => {
+    if (!event.content_type) return 'Inferred by route';
+    if (event.content_id == null) return event.content_type;
+    return `${event.content_type} #${event.content_id}`;
   };
 
   if (authLoading || loading) {
@@ -130,6 +219,19 @@ export default function AnalyticsPage() {
           subtitle={t('subtitle')}
           actions={
             <Stack direction="row" alignItems="center" spacing={2}>
+              <Chip
+                icon={realtimeConnected ? <WifiRoundedIcon /> : <WifiOffRoundedIcon />}
+                label={realtimeConnected ? 'Realtime' : 'Offline'}
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  bgcolor: (th) => alpha(realtimeConnected ? th.palette.success.main : th.palette.warning.main, 0.12),
+                  color: realtimeConnected ? 'success.main' : 'warning.main',
+                  '& .MuiChip-icon': {
+                    color: realtimeConnected ? 'success.main' : 'warning.main',
+                  },
+                }}
+              />
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>{t('period')}</InputLabel>
                 <Select value={days} label={t('period')} onChange={(e) => setDays(e.target.value as number)}>
@@ -151,12 +253,13 @@ export default function AnalyticsPage() {
         />
 
         {error && <Alert severity="error" sx={{ borderRadius: 2.5 }}>{error}</Alert>}
+        {realtimeError && <Alert severity="warning" sx={{ borderRadius: 2.5 }}>{`Realtime: ${realtimeError}`}</Alert>}
 
         {/* Summary cards */}
         {summary && (
           <Grid container spacing={2.5}>
             {summaryCards.map((card, index) => (
-              <Grid key={card.label} size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid key={`${card.label}-${index}`} size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card className="fade-in-up" sx={{
                   height: '100%', animationDelay: `${index * 80}ms`,
                   position: 'relative', overflow: 'hidden',
@@ -204,8 +307,8 @@ export default function AnalyticsPage() {
                 <Typography variant="subtitle1" fontWeight={700}>{t('viewsOverTime')}</Typography>
               </Stack>
               <Stack spacing={0.75}>
-                {viewsByDate.items.map((item: ViewsByDateItem) => (
-                  <Stack key={item.date} direction="row" alignItems="center" spacing={1.5}>
+                {viewsByDate.items.map((item: ViewsByDateItem, idx: number) => (
+                  <Stack key={`${item.date}-${idx}`} direction="row" alignItems="center" spacing={1.5}>
                     <Typography variant="caption" color="text.secondary" sx={{ minWidth: 75, textAlign: 'right', fontFamily: 'monospace', fontSize: '0.7rem' }}>
                       {formatDate(item.date)}
                     </Typography>
@@ -241,7 +344,7 @@ export default function AnalyticsPage() {
                   </Stack>
                   <Stack spacing={1}>
                     {summary.top_pages.map((page: { page_slug: string; views: number }, idx: number) => (
-                      <Stack key={page.page_slug} direction="row" alignItems="center" spacing={1.5} sx={{
+                      <Stack key={`${page.page_slug}-${idx}`} direction="row" alignItems="center" spacing={1.5} sx={{
                         p: 1, borderRadius: 2,
                         bgcolor: (th) => alpha(th.palette.divider, 0.04),
                         border: '1px solid', borderColor: 'divider',
@@ -278,7 +381,7 @@ export default function AnalyticsPage() {
                   </Stack>
                   <Stack spacing={1}>
                     {topContent.items.map((item: TopContentItem, idx: number) => (
-                      <Stack key={`${item.content_type}-${item.content_id}`} direction="row" alignItems="center" spacing={1.5} sx={{
+                      <Stack key={`${item.content_type}-${item.content_id}-${idx}`} direction="row" alignItems="center" spacing={1.5} sx={{
                         p: 1, borderRadius: 2,
                         bgcolor: (th) => alpha(th.palette.divider, 0.04),
                         border: '1px solid', borderColor: 'divider',
@@ -318,7 +421,7 @@ export default function AnalyticsPage() {
                   </Stack>
                   <Stack spacing={1}>
                     {summary.top_referrers.map((ref: { referrer: string; count: number }, idx: number) => (
-                      <Stack key={ref.referrer} direction="row" alignItems="center" spacing={1.5} sx={{
+                      <Stack key={`${ref.referrer}-${idx}`} direction="row" alignItems="center" spacing={1.5} sx={{
                         p: 1, borderRadius: 2,
                         bgcolor: (th) => alpha(th.palette.divider, 0.04),
                         border: '1px solid', borderColor: 'divider',
@@ -355,7 +458,7 @@ export default function AnalyticsPage() {
                   </Stack>
                   <Stack spacing={1}>
                     {summary.top_countries.map((c: { country: string; count: number }, idx: number) => (
-                      <Stack key={c.country} direction="row" alignItems="center" spacing={1.5} sx={{
+                      <Stack key={`${c.country}-${idx}`} direction="row" alignItems="center" spacing={1.5} sx={{
                         p: 1, borderRadius: 2,
                         bgcolor: (th) => alpha(th.palette.divider, 0.04),
                         border: '1px solid', borderColor: 'divider',
@@ -367,7 +470,7 @@ export default function AnalyticsPage() {
                         }}>
                           {idx + 1}
                         </Typography>
-                        <Typography variant="body2" noWrap sx={{ flex: 1, fontWeight: 500 }}>{c.country}</Typography>
+                        <Typography variant="body2" noWrap sx={{ flex: 1, fontWeight: 500 }}>{formatCountryLabel(c.country)}</Typography>
                         <Chip label={`${c.count}`} size="small" sx={{
                           fontWeight: 700, bgcolor: (th) => alpha(th.palette.info.main, 0.08), color: 'info.main',
                         }} />
@@ -407,8 +510,8 @@ export default function AnalyticsPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {recentEvents.map((event) => (
-                      <TableRow key={event.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                    {recentEvents.map((event, idx) => (
+                      <TableRow key={`${event.id}-${event.created_at}-${idx}`} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
                         <TableCell>
                           <Chip label={event.event_type} size="small" sx={{
                             fontWeight: 600, fontSize: '0.7rem',
@@ -422,12 +525,10 @@ export default function AnalyticsPage() {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          {event.content_type ? (
-                            <Typography variant="caption" fontWeight={500}>{event.content_type} #{event.content_id}</Typography>
-                          ) : '—'}
+                          <Typography variant="caption" fontWeight={500}>{formatContentLabel(event)}</Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="caption" fontWeight={500}>{event.country || '—'}</Typography>
+                          <Typography variant="caption" fontWeight={500}>{formatCountryLabel(event.country)}</Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="caption" color="text.secondary">{formatDateTime(event.created_at)}</Typography>

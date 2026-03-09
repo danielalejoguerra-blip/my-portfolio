@@ -267,6 +267,12 @@
       "collapse": "Collapse menu",
       "logout": "Log out"
     },
+    "topBar": {
+      "language": "Change language",
+      "selectLanguage": "Language",
+      "profile": "Profile",
+      "signOut": "Sign out"
+    },
     "welcome": {
       "loading": "Loading...",
       "adminPanel": "Admin Panel",
@@ -649,9 +655,12 @@
         "description": "Description",
         "descriptionPlaceholder": "Brief skill description...",
         "metadata": "Metadata",
-        "metadataHint": "e.g. level, category, icon, technologies, years",
-        "metaKey": "Key",
-        "metaValue": "Value",
+        "metaIcon": "Icon (emoji)",
+        "metaLevel": "Level",
+        "metaCategory": "Category",
+        "metaTechnologies": "Technologies",
+        "metaTechHint": "Type and press Enter or comma to add",
+        "metaYears": "Years of experience",
         "settings": "Settings",
         "visible": "Visible",
         "order": "Order",

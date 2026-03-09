@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
@@ -79,14 +80,8 @@ function buildTheme(mode: 'light' | 'dark') {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          ':root': {
-            '--glass-bg': t.paperGlass,
-            '--glass-border': t.border,
-            '--shadow-card': t.shadowCard,
-            '--shadow-elevated': t.shadowElevated,
-            '--gradient-hero': t.gradientHero,
-            '--gradient-accent': t.gradientAccent,
-          },
+          // CSS variables are defined in globals.css and switch automatically
+          // via @media (prefers-color-scheme: dark) — no Emotion dependency needed.
         },
       },
       MuiButton: {
@@ -306,13 +301,15 @@ const globalCSS = {
 };
 
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
-  // Default to 'light' on server; update on client after mount to avoid hydration mismatch
-  // (useMediaQuery returns false on server but may differ on client → replaced with useEffect)
   const [mode, setMode] = React.useState<'light' | 'dark'>('light');
+
   React.useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    setMode(mq.matches ? 'dark' : 'light');
-    const handler = (e: MediaQueryListEvent) => setMode(e.matches ? 'dark' : 'light');
+    // Use startTransition so React treats this as a deferred, non-urgent update
+    // that won't trigger a hydration reconciliation failure
+    React.startTransition(() => setMode(mq.matches ? 'dark' : 'light'));
+    const handler = (e: MediaQueryListEvent) =>
+      React.startTransition(() => setMode(e.matches ? 'dark' : 'light'));
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
@@ -320,10 +317,12 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
   const theme = React.useMemo(() => buildTheme(mode), [mode]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <GlobalStyles styles={globalCSS} />
-      {children}
-    </ThemeProvider>
+    <AppRouterCacheProvider options={{ key: 'mui' }}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <GlobalStyles styles={globalCSS} />
+        {children}
+      </ThemeProvider>
+    </AppRouterCacheProvider>
   );
 }

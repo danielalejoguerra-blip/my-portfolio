@@ -3,11 +3,40 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Section } from "@/app/components/ui";
+import type { Skill } from "@/types";
 
-export default function Skills() {
+interface SkillsProps {
+  skills?: Skill[] | null;
+}
+
+type SkillRow = { name: string; level: number };
+type SkillCategory = { title: string; skills: SkillRow[] };
+
+const LEVEL_MAP: Record<string, number> = {
+  beginner: 35,
+  intermediate: 60,
+  advanced: 80,
+  expert: 95,
+};
+
+function toProgress(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.min(100, Math.max(10, Math.round(value)));
+  }
+  if (typeof value === "string") {
+    const numeric = Number(value);
+    if (!Number.isNaN(numeric)) {
+      return Math.min(100, Math.max(10, Math.round(numeric)));
+    }
+    return LEVEL_MAP[value.trim().toLowerCase()] ?? 70;
+  }
+  return 70;
+}
+
+export default function Skills({ skills: backendSkills }: SkillsProps) {
   const t = useTranslations("skills");
 
-  const skillCategories = [
+  const fallbackCategories: SkillCategory[] = [
     {
       title: t("categories.frontend"),
       skills: [
@@ -49,6 +78,24 @@ export default function Skills() {
       ],
     },
   ];
+
+  const groupedFromBackend = (backendSkills || []).reduce<Record<string, SkillRow[]>>((acc, skill) => {
+    const metadata = (skill.metadata || {}) as Record<string, unknown>;
+    const category = typeof metadata.category === "string" && metadata.category.trim()
+      ? metadata.category.trim()
+      : t("categories.tools");
+    const progress = toProgress(metadata.level);
+
+    if (!acc[category]) acc[category] = [];
+    acc[category].push({ name: skill.title, level: progress });
+    return acc;
+  }, {});
+
+  const categoriesFromBackend: SkillCategory[] = Object.entries(groupedFromBackend)
+    .map(([title, rows]) => ({ title, skills: rows }))
+    .filter((item) => item.skills.length > 0);
+
+  const skillCategories = categoriesFromBackend.length > 0 ? categoriesFromBackend : fallbackCategories;
 
   return (
     <Section

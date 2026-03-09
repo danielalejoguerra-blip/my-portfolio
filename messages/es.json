@@ -267,6 +267,12 @@
       "collapse": "Colapsar menú",
       "logout": "Cerrar sesión"
     },
+    "topBar": {
+      "language": "Cambiar idioma",
+      "selectLanguage": "Idioma",
+      "profile": "Perfil",
+      "signOut": "Cerrar sesión"
+    },
     "welcome": {
       "loading": "Cargando...",
       "adminPanel": "Admin Panel",
@@ -649,9 +655,12 @@
         "description": "Descripción",
         "descriptionPlaceholder": "Breve descripción de la skill...",
         "metadata": "Metadatos",
-        "metadataHint": "Ej: level, category, icon, technologies, years",
-        "metaKey": "Clave",
-        "metaValue": "Valor",
+        "metaIcon": "Ícono (emoji)",
+        "metaLevel": "Nivel",
+        "metaCategory": "Categoría",
+        "metaTechnologies": "Tecnologías",
+        "metaTechHint": "Escribe y presiona Enter o coma para agregar",
+        "metaYears": "Años de experiencia",
         "settings": "Configuración",
         "visible": "Visible",
         "order": "Orden",

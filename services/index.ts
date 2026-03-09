@@ -12,3 +12,4 @@ export { courseService } from './course.service';
 export { blogService } from './blog.service';
 export { skillService } from './skill.service';
 export { analyticsService } from './analytics.service';
+export { connectAnalyticsRealtime } from './analyticsRealtimeClient';

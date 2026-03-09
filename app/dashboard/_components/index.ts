@@ -1,4 +1,5 @@
 export { default as DashboardShell } from './DashboardShell';
+export { default as DashboardLanguageSelector } from './DashboardLanguageSelector';
 export { default as Sidebar } from './Sidebar';
 export { default as TopBar } from './TopBar';
 export { default as NavItem } from './NavItem';

@@ -118,3 +118,32 @@ export interface ContentViewsPathParams {
 export interface ContentViewsParams {
   days?: number;
 }
+
+// Realtime payloads from Socket.IO
+export interface RealtimeSummaryPayload {
+  total_page_views?: number;
+  unique_visitors?: number;
+  total_views?: number;
+  unique_pages?: number;
+  total_events?: number;
+  top_pages?: Array<{ page_slug?: string; page?: string; views: number }>;
+  top_referrers?: Array<{ referrer: string; count?: number; views?: number }>;
+  top_countries?: Array<{ country: string; count?: number; views?: number }>;
+  views_by_country?: Record<string, number>;
+  views_by_date?: Record<string, number>;
+  period_start?: string;
+  period_end?: string;
+  days?: number;
+}
+
+export interface RealtimeTopContentPayload {
+  items: Array<{
+    content_type: string;
+    content_id: number;
+    title?: string | null;
+    views?: number;
+    view_count?: number;
+  }>;
+  period_start?: string;
+  period_end?: string;
+}

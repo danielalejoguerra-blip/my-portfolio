@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Sidebar, { DRAWER_WIDTH, DRAWER_COLLAPSED } from './Sidebar';
 import TopBar from './TopBar';
@@ -12,12 +12,14 @@ interface DashboardShellProps {
 const STORAGE_KEY = 'dashboard-sidebar-collapsed';
 
 export default function DashboardShell({ children }: DashboardShellProps) {
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(STORAGE_KEY) === 'true';
-    }
-    return false;
-  });
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Sync from localStorage after hydration to avoid SSR mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    // Use queueMicrotask to defer setState out of the synchronous effect body
+    if (stored === 'true') queueMicrotask(() => setCollapsed(true));
+  }, []);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggleCollapse = useCallback(() => {

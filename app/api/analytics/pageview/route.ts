@@ -8,6 +8,10 @@ const API_URL = process.env.REACT_API_HOST;
 
 export async function POST(request: NextRequest) {
   try {
+    if (!API_URL) {
+      return NextResponse.json({ message: 'REACT_API_HOST no está configurado' }, { status: 500 });
+    }
+
     const { searchParams } = new URL(request.url);
     const pageSlug = searchParams.get('page_slug');
     if (!pageSlug) {
@@ -20,12 +24,20 @@ export async function POST(request: NextRequest) {
     if (contentType) qs.set('content_type', contentType);
     if (contentId) qs.set('content_id', contentId);
 
+    const cookie = request.headers.get('cookie');
+
     const response = await fetch(`${API_URL}/analytics/pageview?${qs.toString()}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
     });
 
-    const data = await response.json();
+    const contentTypeHeader = response.headers.get('content-type') || '';
+    const isJson = contentTypeHeader.includes('application/json');
+    const data = isJson ? await response.json() : { message: await response.text() };
+
     if (!response.ok) return NextResponse.json(data, { status: response.status });
     return NextResponse.json(data, { status: 201 });
   } catch (error) {

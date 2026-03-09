@@ -42,6 +42,14 @@
   --gradient-start: #3b82f6;
   --gradient-mid: #8b5cf6;
   --gradient-end: #ec4899;
+
+  /* MUI glass / shadow / gradient tokens — light */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(148, 163, 184, 0.22);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.10);
+  --gradient-hero: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(236,72,153,0.06) 100%);
+  --gradient-accent: linear-gradient(135deg, #6366f1, #ec4899);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -70,6 +78,14 @@
     
     --border: #334155;
     --ring: #60a5fa;
+
+    /* MUI glass / shadow / gradient tokens — dark */
+    --glass-bg: rgba(17, 24, 39, 0.72);
+    --glass-border: rgba(148, 163, 184, 0.12);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.20), 0 4px 24px rgba(0,0,0,0.24);
+    --shadow-elevated: 0 8px 32px rgba(0,0,0,0.40);
+    --gradient-hero: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(236,72,153,0.08) 100%);
+    --gradient-accent: linear-gradient(135deg, #818cf8, #f472b6);
   }
 }
 

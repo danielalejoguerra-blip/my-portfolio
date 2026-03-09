@@ -1,14 +1,26 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Award, ExternalLink } from "lucide-react";
+import { Award } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Badge } from "@/app/components/ui";
+import type { BlogPost, Course } from "@/types";
 
-export default function Certifications() {
+interface CertificationsProps {
+  courses?: Course[] | null;
+  blogPosts?: BlogPost[] | null;
+}
+
+type CertificationItem = {
+  name: string;
+  platform: string;
+  year: string;
+};
+
+export default function Certifications({ courses: backendCourses, blogPosts: backendBlogPosts }: CertificationsProps) {
   const t = useTranslations("certifications");
 
-  const certifications = [
+  const fallbackCertifications: CertificationItem[] = [
     {
       name: t("items.cert1.name"),
       platform: t("items.cert1.platform"),
@@ -25,6 +37,43 @@ export default function Certifications() {
       year: t("items.cert3.year"),
     },
   ];
+
+  const fromBackend: CertificationItem[] = (backendCourses || []).map((course) => {
+    const metadata = (course.metadata || {}) as Record<string, unknown>;
+    const platform = typeof metadata.platform === "string" && metadata.platform.trim()
+      ? metadata.platform
+      : typeof metadata.provider === "string" && metadata.provider.trim()
+        ? metadata.provider
+        : "Course";
+    const year = typeof metadata.year === "string" && metadata.year.trim()
+      ? metadata.year
+      : String(new Date(course.created_at).getFullYear());
+
+    return {
+      name: course.title,
+      platform,
+      year,
+    };
+  });
+
+  const fromBlog: CertificationItem[] = (backendBlogPosts || []).map((post) => {
+    const metadata = (post.metadata || {}) as Record<string, unknown>;
+    const platform = typeof metadata.platform === "string" && metadata.platform.trim()
+      ? metadata.platform
+      : "Blog";
+    const year = post.published_at
+      ? String(new Date(post.published_at).getFullYear())
+      : String(new Date(post.created_at).getFullYear());
+
+    return {
+      name: post.title,
+      platform,
+      year,
+    };
+  });
+
+  const merged = [...fromBackend, ...fromBlog].slice(0, 6);
+  const certifications = merged.length > 0 ? merged : fallbackCertifications;
 
   return (
     <Section

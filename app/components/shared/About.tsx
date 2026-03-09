@@ -4,14 +4,33 @@ import { motion } from "framer-motion";
 import { MapPin, Calendar, Briefcase } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Badge } from "@/app/components/ui";
+import type { PersonalInfo } from "@/types";
 
-export default function About() {
+interface AboutProps {
+  personalInfo?: PersonalInfo | null;
+}
+
+export default function About({ personalInfo }: AboutProps) {
   const t = useTranslations("about");
 
+  const metadata = (personalInfo?.metadata || {}) as Record<string, unknown>;
+  const aboutYears = typeof metadata.years_experience === "number"
+    ? `${metadata.years_experience}+`
+    : "1+";
+  const aboutProjects = typeof metadata.projects_count === "number"
+    ? `${metadata.projects_count}+`
+    : "3+";
+  const aboutTechs = typeof metadata.technologies_count === "number"
+    ? `${metadata.technologies_count}+`
+    : "10+";
+  const location = personalInfo?.location || t("location");
+  const role = personalInfo?.headline || t("experience");
+  const bio = personalInfo?.bio || null;
+
   const stats = [
-    { number: "1+", label: t("stats.years") },
-    { number: "3+", label: t("stats.projects") },
-    { number: "10+", label: t("stats.technologies") },
+    { number: aboutYears, label: t("stats.years") },
+    { number: aboutProjects, label: t("stats.projects") },
+    { number: aboutTechs, label: t("stats.technologies") },
     { number: "100%", label: t("stats.commitment") },
   ];
 
@@ -33,11 +52,11 @@ export default function About() {
           <div className="flex flex-wrap gap-3">
             <Badge variant="primary">
               <MapPin className="w-3 h-3 mr-1.5" />
-              {t("location")}
+              {location}
             </Badge>
             <Badge variant="primary">
               <Calendar className="w-3 h-3 mr-1.5" />
-              {t("experience")}
+              {role}
             </Badge>
             <Badge variant="primary">
               <Briefcase className="w-3 h-3 mr-1.5" />
@@ -45,21 +64,29 @@ export default function About() {
             </Badge>
           </div>
 
-          <p className="text-[var(--muted-foreground)] text-lg leading-relaxed">
-            {t.rich("description1", {
-              role: (chunks) => <span className="text-[var(--foreground)] font-medium">{chunks}</span>,
-            })}
-          </p>
+          {bio ? (
+            <p className="text-(--muted-foreground) text-lg leading-relaxed">
+              {bio}
+            </p>
+          ) : (
+            <>
+              <p className="text-(--muted-foreground) text-lg leading-relaxed">
+                {t.rich("description1", {
+                  role: (chunks) => <span className="text-(--foreground) font-medium">{chunks}</span>,
+                })}
+              </p>
 
-          <p className="text-[var(--muted-foreground)] text-lg leading-relaxed">
-            {t.rich("description2", {
-              company: (chunks) => <span className="text-[var(--primary)] font-medium">{chunks}</span>,
-            })}
-          </p>
+              <p className="text-(--muted-foreground) text-lg leading-relaxed">
+                {t.rich("description2", {
+                  company: (chunks) => <span className="text-(--primary) font-medium">{chunks}</span>,
+                })}
+              </p>
 
-          <p className="text-[var(--muted-foreground)] text-lg leading-relaxed">
-            {t("description3")}
-          </p>
+              <p className="text-(--muted-foreground) text-lg leading-relaxed">
+                {t("description3")}
+              </p>
+            </>
+          )}
         </motion.div>
 
         {/* Stats side */}
@@ -77,12 +104,12 @@ export default function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
-              className="bg-[var(--card)] border border-[var(--card-border)] rounded-[var(--radius-xl)] p-6 text-center hover:border-[var(--primary)]/30 transition-colors duration-300"
+              className="bg-(--card) border border-(--card-border) rounded-xl p-6 text-center hover:border-(--primary)/30 transition-colors duration-300"
             >
-              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)] bg-clip-text text-transparent mb-2">
+              <div className="text-4xl md:text-5xl font-bold bg-linear-to-r from-(--gradient-start) to-(--accent) bg-clip-text text-transparent mb-2">
                 {stat.number}
               </div>
-              <div className="text-sm text-[var(--muted-foreground)]">
+              <div className="text-sm text-(--muted-foreground)">
                 {stat.label}
               </div>
             </motion.div>
