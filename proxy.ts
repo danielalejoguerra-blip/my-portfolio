@@ -24,7 +24,7 @@ const authRoutes = ['/login'];
 const registerRoutes = ['/register'];
 
 // Rutas que NO deben pasar por i18n middleware
-const nonI18nRoutes = ['/login', '/register', '/dashboard', '/admin', '/api'];
+const nonI18nRoutes = ['/login', '/register', '/password-reset', '/dashboard', '/admin', '/api'];
 
 // Nueva API de Next.js 16: usar "proxy" en lugar de "middleware"
 export async function proxy(request: NextRequest) {

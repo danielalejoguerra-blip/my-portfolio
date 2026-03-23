@@ -3,7 +3,7 @@
 // ============================================
 
 import api from './api';
-import type { LoginRequest, RegisterRequest, User } from '@/types';
+import type { LoginRequest, RegisterRequest, User, PasswordResetRequestPayload, PasswordResetConfirmPayload, PasswordResetResponse } from '@/types';
 import type { AuthResponse, LogoutResponse, RefreshResponse } from '@/types';
 
 export const authService = {
@@ -51,6 +51,26 @@ export const authService = {
    */
   async getMe(): Promise<User> {
     const response = await api.get<User>('/auth/me');
+    return response.data;
+  },
+
+  /**
+   * Solicitar código de reset de contraseña
+   * @param data - Email del usuario
+   * @returns Mensaje de confirmación
+   */
+  async requestPasswordReset(data: PasswordResetRequestPayload): Promise<PasswordResetResponse> {
+    const response = await api.post<PasswordResetResponse>('/auth/password-reset/request', data);
+    return response.data;
+  },
+
+  /**
+   * Confirmar reset de contraseña con código
+   * @param data - Email, código y nueva contraseña
+   * @returns Mensaje de confirmación
+   */
+  async confirmPasswordReset(data: PasswordResetConfirmPayload): Promise<PasswordResetResponse> {
+    const response = await api.post<PasswordResetResponse>('/auth/password-reset/confirm', data);
     return response.data;
   },
 };

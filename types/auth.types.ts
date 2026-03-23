@@ -52,3 +52,20 @@ export interface AuthContextType extends AuthState {
   refreshToken: () => Promise<void>;
   clearError: () => void;
 }
+
+// Request para solicitar código de reset
+export interface PasswordResetRequestPayload {
+  email: string;
+}
+
+// Request para confirmar reset de contraseña
+export interface PasswordResetConfirmPayload {
+  email: string;
+  code: string;
+  new_password: string;
+}
+
+// Respuesta de password reset
+export interface PasswordResetResponse {
+  detail: string;
+}

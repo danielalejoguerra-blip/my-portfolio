@@ -26,11 +26,18 @@ import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+
+import Link from '@mui/material/Link';
+import IconButton from '@mui/material/IconButton';
+import NextLink from 'next/link';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const loginSchema = z.object({
     email: z.string().min(1, t('emailRequired')).email(t('emailInvalid')),
@@ -156,7 +163,7 @@ export default function LoginPage() {
                   <TextField
                     fullWidth
                     label={t('passwordLabel')}
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder={t('passwordPlaceholder')}
                     error={!!errors.password}
                     helperText={errors.password?.message}
@@ -164,7 +171,17 @@ export default function LoginPage() {
                       input: {
                         endAdornment: (
                           <InputAdornment position="end">
-                            <LockRoundedIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              size="small"
+                              aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                              {showPassword
+                                ? <VisibilityOffRoundedIcon sx={{ fontSize: 20 }} />
+                                : <VisibilityRoundedIcon sx={{ fontSize: 20 }} />
+                              }
+                            </IconButton>
                           </InputAdornment>
                         ),
                       },
@@ -184,7 +201,22 @@ export default function LoginPage() {
                 </Stack>
               </form>
 
-              <Typography variant="caption" display="block" textAlign="center" color="text.secondary" sx={{ mt: 3 }}>
+              <Link
+                component={NextLink}
+                href="/password-reset"
+                underline="hover"
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  mt: 2,
+                  fontSize: '0.8125rem',
+                  color: 'primary.main',
+                }}
+              >
+                {t('forgotPassword')}
+              </Link>
+
+              <Typography variant="caption" display="block" textAlign="center" color="text.secondary" sx={{ mt: 2 }}>
                 {t('adminOnly')}
               </Typography>
             </CardContent>
