@@ -17,7 +17,7 @@ export async function getPublicPersonalInfo(lang?: string): Promise<PersonalInfo
     const response = await fetch(`${API_URL}/personal-info?limit=1&offset=0${langParam}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {

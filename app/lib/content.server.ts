@@ -15,7 +15,7 @@ async function fetchPublicList<T>(path: string, limit: number, lang?: string): P
     const response = await fetch(`${API_URL}${path}?limit=${limit}&offset=0${langParam}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) return [];
