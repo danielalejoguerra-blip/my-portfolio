@@ -4,11 +4,24 @@ import { motion } from "framer-motion";
 import { GraduationCap, Calendar, Award } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Badge } from "@/app/components/ui";
+import type { Education as EducationItem } from "@/types";
 
-export default function Education() {
+interface EducationProps {
+  educationItems?: EducationItem[] | null;
+}
+
+type CardItem = {
+  degree: string;
+  institution: string;
+  period: string;
+  description: string;
+  honors: boolean;
+};
+
+export default function Education({ educationItems: backendEducation }: EducationProps) {
   const t = useTranslations("education");
 
-  const educationItems = [
+  const fallbackEducationItems: CardItem[] = [
     {
       degree: t("items.edu1.degree"),
       institution: t("items.edu1.institution"),
@@ -24,6 +37,27 @@ export default function Education() {
       honors: false,
     },
   ];
+
+  const fromBackend: CardItem[] = (backendEducation || []).map((item) => {
+    const metadata = (item.metadata || {}) as Record<string, unknown>;
+    const institution = typeof metadata.institution === "string" && metadata.institution.trim()
+      ? metadata.institution
+      : t("items.edu1.institution");
+    const period = typeof metadata.period === "string" && metadata.period.trim()
+      ? metadata.period
+      : `${new Date(item.created_at).getFullYear()}`;
+    const honors = typeof metadata.honors === "boolean" ? metadata.honors : false;
+
+    return {
+      degree: item.title,
+      institution,
+      period,
+      description: item.description || item.content || "",
+      honors,
+    };
+  });
+
+  const educationItems = fromBackend.length > 0 ? fromBackend : fallbackEducationItems;
 
   return (
     <Section

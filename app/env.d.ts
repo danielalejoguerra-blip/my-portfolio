@@ -1,0 +1,12 @@
+declare namespace NodeJS {
+	interface ProcessEnv {
+		NEXT_PUBLIC_ANALYTICS_SOCKET_URL?: string;
+		NEXT_PUBLIC_BACKEND_URL?: string;
+		NEXT_PUBLIC_ANALYTICS_SOCKET_PATH?: string;
+		NEXT_PUBLIC_SOCKETIO_PATH?: string;
+		NEXT_PUBLIC_ANALYTICS_NAMESPACE?: string;
+		NEXT_PUBLIC_ANALYTICS_ROOM?: string;
+		NEXT_PUBLIC_ANALYTICS_REALTIME_DAYS?: string;
+	}
+}
+

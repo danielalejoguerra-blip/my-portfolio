@@ -4,11 +4,25 @@ import { motion } from "framer-motion";
 import { Building2, Calendar } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Badge } from "@/app/components/ui";
+import type { Experience as ExperienceItem } from "@/types";
 
-export default function Experience() {
+interface ExperienceProps {
+  experiences?: ExperienceItem[] | null;
+}
+
+type TimelineItem = {
+  title: string;
+  company: string;
+  period: string;
+  description: string;
+  technologies: string[];
+  current: boolean;
+};
+
+export default function Experience({ experiences: backendExperiences }: ExperienceProps) {
   const t = useTranslations("experience");
 
-  const experiences = [
+  const fallbackItems: TimelineItem[] = [
     {
       title: t("jobs.job1.title"),
       company: t("jobs.job1.company"),
@@ -18,6 +32,31 @@ export default function Experience() {
       current: true,
     },
   ];
+
+  const fromBackend: TimelineItem[] = (backendExperiences || []).map((item) => {
+    const metadata = (item.metadata || {}) as Record<string, unknown>;
+    const technologies = Array.isArray(metadata.technologies)
+      ? (metadata.technologies as string[])
+      : [];
+    const company = typeof metadata.company === "string" && metadata.company.trim()
+      ? metadata.company
+      : t("jobs.job1.company");
+    const period = typeof metadata.period === "string" && metadata.period.trim()
+      ? metadata.period
+      : `${new Date(item.created_at).getFullYear()} - ${item.deleted_at ? new Date(item.deleted_at).getFullYear() : t("current")}`;
+    const current = typeof metadata.current === "boolean" ? metadata.current : !item.deleted_at;
+
+    return {
+      title: item.title,
+      company,
+      period,
+      description: item.description || item.content || "",
+      technologies,
+      current,
+    };
+  });
+
+  const experiences = fromBackend.length > 0 ? fromBackend : fallbackItems;
 
   return (
     <Section
