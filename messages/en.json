@@ -84,6 +84,17 @@
       }
     }
   },
+  "projectDetail": {
+    "backToProjects": "Back to projects",
+    "viewCode": "View code",
+    "viewLive": "View live",
+    "description": "Description",
+    "details": "Details",
+    "gallery": "Gallery",
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next"
+  },
   "projects": {
     "title": "Projects",
     "subtitle": "Some of the projects I've worked on",

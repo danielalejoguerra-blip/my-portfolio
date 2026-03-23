@@ -35,3 +35,31 @@ export async function getPublicProjects(limit: number = 20): Promise<Project[]> 
     return [];
   }
 }
+
+/**
+ * Obtiene un proyecto por slug.
+ * Se usa desde Server Components para SSR.
+ * Retorna null si no se encuentra o el backend no está disponible.
+ */
+export async function getPublicProjectBySlug(slug: string): Promise<Project | null> {
+  try {
+    const response = await fetch(
+      `${API_URL}/projects/${encodeURIComponent(slug)}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      }
+    );
+
+    if (!response.ok) {
+      console.warn('Failed to fetch project:', response.status);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.warn('Project fetch error (backend may be offline):', error);
+    return null;
+  }
+}

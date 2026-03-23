@@ -2,12 +2,15 @@
 
 import { motion } from "framer-motion";
 import { ExternalLink, Github, Folder } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import Image from "next/image";
+import Link from "next/link";
 import { Section, Card, Badge } from "@/app/components/ui";
 import type { Project } from "@/types";
 
 // Tipo interno para el render
 interface ProjectItem {
+  slug: string;
   title: string;
   description: string;
   image: string | null;
@@ -23,9 +26,11 @@ interface ProjectsProps {
 
 export default function Projects({ projects: backendProjects }: ProjectsProps) {
   const t = useTranslations("projects");
+  const locale = useLocale();
 
   // Map backend data → internal render type
   const fromBackend: ProjectItem[] = (backendProjects || []).map((p) => ({
+    slug: p.slug,
     title: p.title,
     description: p.description || '',
     image: p.images && p.images.length > 0 ? p.images[0] : null,
@@ -40,6 +45,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
   // Fallback: hardcoded i18n projects when backend returns nothing
   const fallbackProjects: ProjectItem[] = [
     {
+      slug: "crm-personalizado",
       title: t("items.project1.title"),
       description: t("items.project1.description"),
       image: null,
@@ -49,6 +55,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
       featured: true,
     },
     {
+      slug: "ai-audit-system",
       title: t("items.project2.title"),
       description: t("items.project2.description"),
       image: null,
@@ -58,6 +65,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
       featured: true,
     },
     {
+      slug: "scalable-rest-api",
       title: t("items.project3.title"),
       description: t("items.project3.description"),
       image: null,
@@ -67,6 +75,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
       featured: true,
     },
     {
+      slug: "dashboard-analytics",
       title: t("items.project4.title"),
       description: t("items.project4.description"),
       image: null,
@@ -76,6 +85,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
       featured: false,
     },
     {
+      slug: "process-automation",
       title: t("items.project5.title"),
       description: t("items.project5.description"),
       image: null,
@@ -85,6 +95,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
       featured: false,
     },
     {
+      slug: "personal-portfolio",
       title: t("items.project6.title"),
       description: t("items.project6.description"),
       image: null,
@@ -114,15 +125,26 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
           >
+            <Link href={`/${locale}/projects/${project.slug}`}>
             <Card
-              className="h-full flex flex-col group"
+              className="h-full flex flex-col group cursor-pointer"
               whileHover={{ y: -5 }}
             >
-              {/* Project image placeholder */}
+              {/* Project image */}
               <div className="relative h-48 -mx-6 -mt-6 mb-4 bg-gradient-to-br from-[var(--gradient-start)]/20 via-[var(--gradient-mid)]/20 to-[var(--gradient-end)]/20 rounded-t-[var(--radius-xl)] overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Folder className="w-16 h-16 text-[var(--primary)]/30" />
-                </div>
+                {project.image ? (
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Folder className="w-16 h-16 text-[var(--primary)]/30" />
+                  </div>
+                )}
                 
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-[var(--foreground)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
@@ -175,6 +197,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
                 </div>
               </div>
             </Card>
+            </Link>
           </motion.div>
         ))}
       </div>

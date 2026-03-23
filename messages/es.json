@@ -84,6 +84,17 @@
       }
     }
   },
+  "projectDetail": {
+    "backToProjects": "Volver a proyectos",
+    "viewCode": "Ver código",
+    "viewLive": "Ver en vivo",
+    "description": "Descripción",
+    "details": "Detalles",
+    "gallery": "Galería",
+    "close": "Cerrar",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
   "projects": {
     "title": "Proyectos",
     "subtitle": "Algunos de los proyectos en los que he trabajado",
