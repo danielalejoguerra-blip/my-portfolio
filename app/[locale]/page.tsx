@@ -1,18 +1,20 @@
 import { setRequestLocale } from "next-intl/server";
+import dynamic from "next/dynamic";
 import {
   Header,
   Hero,
   About,
   Skills,
-  Experience,
-  Education,
-  Certifications,
-  Blog,
-  Projects,
-  Contact,
-  Footer,
   PageViewTracker,
 } from "@/app/components/shared";
+
+const Experience = dynamic(() => import("@/app/components/shared/Experience"));
+const Education = dynamic(() => import("@/app/components/shared/Education"));
+const Certifications = dynamic(() => import("@/app/components/shared/Certifications"));
+const Blog = dynamic(() => import("@/app/components/shared/Blog"));
+const Projects = dynamic(() => import("@/app/components/shared/Projects"));
+const Contact = dynamic(() => import("@/app/components/shared/Contact"));
+const Footer = dynamic(() => import("@/app/components/shared/Footer"));
 import { getPublicPersonalInfo } from "@/app/lib/personalInfo.server";
 import { getPublicProjects } from "@/app/lib/projects.server";
 import {

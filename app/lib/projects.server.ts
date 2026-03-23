@@ -19,7 +19,7 @@ export async function getPublicProjects(limit: number = 20, lang?: string): Prom
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
+        next: { revalidate: 3600 },
       }
     );
 
@@ -50,7 +50,7 @@ export async function getPublicProjectBySlug(slug: string, lang?: string): Promi
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
+        next: { revalidate: 3600 },
       }
     );
 
