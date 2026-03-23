@@ -4,18 +4,29 @@ import { motion } from "framer-motion";
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Button from "@/app/components/ui/Button";
-import LanguageSelector from "./LanguageSelector";
+import type { PersonalInfo } from "@/types";
 
-export default function Hero() {
+interface HeroProps {
+  personalInfo?: PersonalInfo | null;
+}
+
+export default function Hero({ personalInfo }: HeroProps) {
   const t = useTranslations("hero");
+
+  // Datos dinámicos con fallbacks
+  const fullName = personalInfo?.full_name || "Daniel Guerra";
+  const nameParts = fullName.split(" ");
+  const firstName = nameParts[0] || "Daniel";
+  const lastName = nameParts.slice(1).join(" ") || "Guerra";
+  const initials = `${firstName[0] || "D"}${lastName[0] || "G"}`;
+  const socialLinks = personalInfo?.social_links || {};
+  const githubUrl = socialLinks.github || "https://github.com/DanielWar01";
+  const linkedinUrl = socialLinks.linkedin || "https://linkedin.com/in/daniel-guerra-197551301";
+  const emailAddress = personalInfo?.email || "danielalejoguerra@gmail.com";
+  const avatarUrl = personalInfo?.avatar_url || null;
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Language selector - fixed position */}
-      <div className="absolute top-6 right-6 z-20">
-        <LanguageSelector />
-      </div>
-
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-start)]/5 via-transparent to-[var(--gradient-end)]/5" />
       
@@ -56,10 +67,14 @@ export default function Hero() {
           className="mb-8"
         >
           <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] p-1">
-            <div className="w-full h-full rounded-full bg-[var(--background)] flex items-center justify-center">
-              <span className="text-4xl font-bold bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)] bg-clip-text text-transparent">
-                DG
-              </span>
+            <div className="w-full h-full rounded-full bg-[var(--background)] flex items-center justify-center overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <span className="text-4xl font-bold bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)] bg-clip-text text-transparent">
+                  {initials}
+                </span>
+              )}
             </div>
           </div>
         </motion.div>
@@ -74,9 +89,9 @@ export default function Hero() {
             {t("greeting")}
           </p>
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
-            <span className="text-[var(--foreground)]">Daniel </span>
+            <span className="text-[var(--foreground)]">{firstName} </span>
             <span className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] bg-clip-text text-transparent">
-              Guerra
+              {lastName}
             </span>
           </h1>
           <h2 className="text-2xl md:text-3xl text-[var(--muted-foreground)] mb-8">
@@ -121,7 +136,7 @@ export default function Hero() {
           className="flex justify-center gap-6"
         >
           <a
-            href="https://github.com/DanielWar01"
+            href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="p-3 rounded-full bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 hover:scale-110"
@@ -130,7 +145,7 @@ export default function Hero() {
             <Github className="w-5 h-5" />
           </a>
           <a
-            href="https://linkedin.com/in/daniel-guerra-197551301"
+            href={linkedinUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="p-3 rounded-full bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 hover:scale-110"
@@ -139,7 +154,7 @@ export default function Hero() {
             <Linkedin className="w-5 h-5" />
           </a>
           <a
-            href="mailto:danielalejoguerra@gmail.com"
+            href={`mailto:${emailAddress}`}
             className="p-3 rounded-full bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 hover:scale-110"
             aria-label="Email"
           >
