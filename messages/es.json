@@ -142,7 +142,8 @@
       "submit": "Enviar mensaje",
       "send": "Enviar",
       "sending": "Enviando...",
-      "success": "¡Mensaje enviado! Te responderé pronto."
+      "success": "¡Mensaje enviado! Te responderé pronto.",
+      "error": "Error al enviar el mensaje. Inténtalo de nuevo."
     },
     "info": {
       "email": "Email",
@@ -710,6 +711,8 @@
         "descriptionPlaceholder": "Breve descripción de la skill...",
         "metadata": "Metadatos",
         "metaIcon": "Ícono (emoji)",
+        "metaIconCustom": "Personalizado",
+        "metaIconCustomPlaceholder": "O escribe/pega un emoji personalizado",
         "metaLevel": "Nivel",
         "metaCategory": "Categoría",
         "metaTechnologies": "Tecnologías",

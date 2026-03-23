@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Section } from "@/app/components/ui";
 import type { Skill } from "@/types";
@@ -9,8 +10,10 @@ interface SkillsProps {
   skills?: Skill[] | null;
 }
 
-type SkillRow = { name: string; level: number };
+type SkillRow = { name: string; level: number; icon?: string };
 type SkillCategory = { title: string; skills: SkillRow[] };
+
+const COLLAPSE_THRESHOLD = 5;
 
 const LEVEL_MAP: Record<string, number> = {
   beginner: 35,
@@ -85,9 +88,10 @@ export default function Skills({ skills: backendSkills }: SkillsProps) {
       ? metadata.category.trim()
       : t("categories.tools");
     const progress = toProgress(metadata.level);
+    const icon = typeof metadata.icon === "string" ? metadata.icon : undefined;
 
     if (!acc[category]) acc[category] = [];
-    acc[category].push({ name: skill.title, level: progress });
+    acc[category].push({ name: skill.title, level: progress, icon });
     return acc;
   }, {});
 
@@ -102,61 +106,89 @@ export default function Skills({ skills: backendSkills }: SkillsProps) {
       id="skills"
       title={t("title")}
       subtitle={t("subtitle")}
-      className="bg-[var(--muted)]/30"
+      className="bg-(--muted)/30"
     >
       <div className="grid md:grid-cols-2 gap-8">
         {skillCategories.map((category, categoryIndex) => (
-          <motion.div
+          <CategoryCard
             key={category.title}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
-            className="bg-[var(--card)] border border-[var(--card-border)] rounded-[var(--radius-xl)] p-6 hover:shadow-lg transition-shadow duration-300"
-          >
-            <h3 className="text-xl font-semibold text-[var(--foreground)] mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)]" />
-              {category.title}
-            </h3>
-            <div className="space-y-4">
-              {category.skills.map((skill, skillIndex) => (
-                <motion.div
-                  key={skill.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{
-                    duration: 0.3,
-                    delay: categoryIndex * 0.1 + skillIndex * 0.05,
-                  }}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-[var(--foreground)]">
-                      {skill.name}
-                    </span>
-                    <span className="text-xs text-[var(--muted-foreground)]">
-                      {skill.level}%
-                    </span>
-                  </div>
-                  <div className="h-2 bg-[var(--secondary)] rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)]"
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${skill.level}%` }}
-                      viewport={{ once: true }}
-                      transition={{
-                        duration: 0.8,
-                        delay: categoryIndex * 0.1 + skillIndex * 0.05,
-                        ease: "easeOut",
-                      }}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+            category={category}
+            categoryIndex={categoryIndex}
+          />
         ))}
       </div>
     </Section>
+  );
+}
+
+function CategoryCard({ category, categoryIndex }: { category: SkillCategory; categoryIndex: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = category.skills.length > COLLAPSE_THRESHOLD;
+  const visibleSkills = expanded ? category.skills : category.skills.slice(0, COLLAPSE_THRESHOLD);
+  const hiddenCount = category.skills.length - COLLAPSE_THRESHOLD;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
+      className="bg-(--card) border border-(--card-border) rounded-xl p-6 hover:shadow-lg transition-shadow duration-300"
+    >
+      <h3 className="text-xl font-semibold text-(--foreground) mb-6 flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-linear-to-r from-(--gradient-start) to-(--accent)" />
+        {category.title}
+      </h3>
+      <div className="space-y-4">
+        <AnimatePresence initial={false}>
+          {visibleSkills.map((skill, skillIndex) => (
+            <motion.div
+              key={skill.name}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20, height: 0, marginTop: 0 }}
+              transition={{
+                duration: 0.3,
+                delay: skillIndex * 0.04,
+              }}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-(--foreground) flex items-center gap-1.5">
+                  {skill.icon && (
+                    <span className="text-base leading-none">{skill.icon}</span>
+                  )}
+                  {skill.name}
+                </span>
+                <span className="text-xs text-(--muted-foreground)">
+                  {skill.level}%
+                </span>
+              </div>
+              <div className="h-2 bg-(--secondary) rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-linear-to-r from-(--gradient-start) to-(--accent)"
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${skill.level}%` }}
+                  viewport={{ once: true }}
+                  transition={{
+                    duration: 0.8,
+                    delay: categoryIndex * 0.1 + skillIndex * 0.05,
+                    ease: "easeOut",
+                  }}
+                />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-5 w-full text-xs font-semibold py-2 rounded-lg border border-(--card-border) text-(--muted-foreground) hover:text-(--foreground) hover:border-(--accent) hover:bg-(--accent)/5 transition-all duration-200"
+        >
+          {expanded ? "Ver menos ▲" : `Ver más (${hiddenCount}) ▼`}
+        </button>
+      )}
+    </motion.div>
   );
 }

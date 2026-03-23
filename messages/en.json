@@ -142,7 +142,8 @@
       "submit": "Send message",
       "send": "Send",
       "sending": "Sending...",
-      "success": "Message sent! I'll get back to you soon."
+      "success": "Message sent! I'll get back to you soon.",
+      "error": "Error sending message. Please try again."
     },
     "info": {
       "email": "Email",
@@ -710,6 +711,8 @@
         "descriptionPlaceholder": "Brief skill description...",
         "metadata": "Metadata",
         "metaIcon": "Icon (emoji)",
+        "metaIconCustom": "Custom",
+        "metaIconCustomPlaceholder": "Or type/paste a custom emoji",
         "metaLevel": "Level",
         "metaCategory": "Category",
         "metaTechnologies": "Technologies",

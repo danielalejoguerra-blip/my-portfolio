@@ -12,3 +12,4 @@ export * from './course.types';
 export * from './blog.types';
 export * from './skill.types';
 export * from './analytics.types';
+export * from './contact.types';

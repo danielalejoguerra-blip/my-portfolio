@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Mail, MapPin, Send, Linkedin, Github, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Card, Button } from "@/app/components/ui";
+import { contactService } from "@/services";
 import type { PersonalInfo } from "@/types";
 
 interface ContactProps {
@@ -20,15 +21,22 @@ export default function Contact({ personalInfo }: ContactProps) {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simular envío
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setFormData({ name: "", email: "", message: "" });
-    alert(t("form.success"));
+    setSubmitStatus("idle");
+
+    try {
+      await contactService.send(formData);
+      setSubmitStatus("success");
+      setFormData({ name: "", email: "", message: "" });
+    } catch {
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const socialLinks = personalInfo?.social_links || {};
@@ -250,6 +258,17 @@ export default function Contact({ personalInfo }: ContactProps) {
                   </span>
                 )}
               </Button>
+
+              {submitStatus === "success" && (
+                <p className="text-sm text-green-600 dark:text-green-400 text-center">
+                  {t("form.success")}
+                </p>
+              )}
+              {submitStatus === "error" && (
+                <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {t("form.error")}
+                </p>
+              )}
             </form>
           </Card>
         </motion.div>

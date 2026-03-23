@@ -43,16 +43,16 @@ export const skillService = {
   },
 
   async update(id: number, data: SkillUpdate): Promise<Skill> {
-    const response = await api.put<Skill>(`/skills/${id}`, data);
+    const response = await api.put<Skill>(`/skills/admin/${id}`, data);
     return response.data;
   },
 
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/skills/${id}`, { params: { hard } });
+    await api.delete(`/skills/admin/${id}`, { params: { hard } });
   },
 
   async restore(id: number): Promise<Skill> {
-    const response = await api.post<Skill>(`/skills/${id}/restore`);
+    const response = await api.post<Skill>(`/skills/admin/${id}/restore`);
     return response.data;
   },
 };

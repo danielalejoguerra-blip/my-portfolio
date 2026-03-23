@@ -32,9 +32,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Drawer from '@mui/material/Drawer';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
 import { alpha } from '@mui/material/styles';
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -49,9 +46,6 @@ import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
 import TableRowsRoundedIcon from '@mui/icons-material/TableRowsRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import DataObjectRoundedIcon from '@mui/icons-material/DataObjectRounded';
 import SortRoundedIcon from '@mui/icons-material/SortRounded';
 
 import { PageHeader } from '../_components';
@@ -368,6 +362,40 @@ function SkillTable({ items, onEdit, onDelete, onHardDelete, onRestore, t }: {
   );
 }
 
+// ─── Emoji presets for quick selection ─────────────────────────────────────────
+const SKILL_EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
+  {
+    label: 'Frontend',
+    emojis: ['⚛️', '🟦', '🟧', '🎨', '🖌️', '🟩', '🌀', '💠', '🔵', '🟣', '🎭', '🖼️'],
+  },
+  {
+    label: 'Backend',
+    emojis: ['🐍', '☕', '🦀', '🐘', '🟨', '🔷', '🟢', '🦎', '🐢', '🔴', '⚙️', '🏭'],
+  },
+  {
+    label: 'Database',
+    emojis: ['🗄️', '🐬', '🍃', '📊', '🗃️', '💾', '🔑', '📋', '🗂️', '📈'],
+  },
+  {
+    label: 'Cloud & DevOps',
+    emojis: ['🐳', '☁️', '🔧', '🏗️', '🚀', '⚡', '🌐', '🔌', '📦', '🛰️', '🌩️', '🔁'],
+  },
+  {
+    label: 'Mobile',
+    emojis: ['📱', '🍎', '🤖', '📲', '🗺️', '📡'],
+  },
+  {
+    label: 'AI & Science',
+    emojis: ['🤖', '🧠', '🔬', '🧪', '📡', '🔭', '🧬', '💡', '🎯', '📐'],
+  },
+  {
+    label: 'Tools & Other',
+    emojis: ['🛡️', '🔗', '🧩', '💻', '🖥️', '⌨️', '🖱️', '🔐', '🧰', '📝', '✏️', '📌'],
+  },
+];
+
+const SKILL_EMOJIS = SKILL_EMOJI_GROUPS.flatMap((g) => g.emojis);
+
 // ─── FormDrawer ───────────────────────────────────────────────────────────────
 function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit, saving, formError, t }: {
   open: boolean; onClose: () => void; editingId: number | null;
@@ -445,115 +473,124 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
           <Stack spacing={2.5}>
             {formError && <Alert severity="error" sx={{ borderRadius: 2 }}>{formError}</Alert>}
 
-            {/* Basic Info */}
-            <Accordion defaultExpanded disableGutters elevation={0} sx={{ bgcolor: 'transparent', '&::before': { display: 'none' }, border: '1px solid var(--glass-border)', borderRadius: '12px !important' }}>
-              <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={{ px: 2, minHeight: 48, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <BuildRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="body2" fontWeight={700}>{t('form.basicInfo')}</Typography>
-                </Stack>
-              </AccordionSummary>
-              <AccordionDetails sx={{ px: 2, pb: 2 }}>
-                <Stack spacing={2}>
-                  <TextField fullWidth label={t('form.title')} value={formData.title} onChange={(e) => handleTitleChange(e.target.value)} required size="small" />
-                  <TextField fullWidth label={t('form.slug')} value={formData.slug || ''} onChange={(e) => handleFieldChange('slug', e.target.value)} size="small" helperText={t('form.slugHint')} />
-                  <TextField fullWidth label={t('form.description')} value={formData.description || ''} onChange={(e) => handleFieldChange('description', e.target.value)} size="small" multiline rows={3} placeholder={t('form.descriptionPlaceholder')} />
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
+            {/* Title + Slug inline */}
+            <TextField fullWidth label={t('form.title')} value={formData.title} onChange={(e) => handleTitleChange(e.target.value)} required size="small" />
+            <TextField fullWidth label={t('form.slug')} value={formData.slug || ''} onChange={(e) => handleFieldChange('slug', e.target.value)} size="small" helperText={t('form.slugHint')} />
 
-            {/* Metadata */}
-            <Accordion defaultExpanded disableGutters elevation={0} sx={{ bgcolor: 'transparent', '&::before': { display: 'none' }, border: '1px solid var(--glass-border)', borderRadius: '12px !important' }}>
-              <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={{ px: 2, minHeight: 48, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <DataObjectRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="body2" fontWeight={700}>{t('form.metadata')}</Typography>
-                  {formData.metadata && Object.keys(formData.metadata).length > 0 && (
-                    <Chip label={Object.keys(formData.metadata).length} size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.primary.main, 0.1), color: 'primary.main' }} />
-                  )}
-                </Stack>
-              </AccordionSummary>
-              <AccordionDetails sx={{ px: 2, pb: 2 }}>
-                <Stack spacing={2.5}>
+            {/* Description */}
+            <TextField fullWidth label={t('form.description')} value={formData.description || ''} onChange={(e) => handleFieldChange('description', e.target.value)} size="small" multiline rows={2} placeholder={t('form.descriptionPlaceholder')} />
 
-                  {/* Icon */}
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaIcon')}</Typography>
-                    <TextField size="small" value={metaIcon} onChange={(e) => updateMeta('icon', e.target.value)} placeholder="⚛️" sx={{ width: 100 }} inputProps={{ style: { fontSize: '1.4rem', textAlign: 'center', padding: '6px 8px' } }} />
+            <Divider />
+
+            {/* Emoji picker */}
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: 'block' }}>{t('form.metaIcon')}</Typography>
+              <Box sx={{
+                maxHeight: 260, overflowY: 'auto',
+                p: 1, borderRadius: 2, border: '1px solid var(--glass-border)',
+                bgcolor: (th) => alpha(th.palette.text.primary, 0.02),
+              }}>
+                {SKILL_EMOJI_GROUPS.map((group) => (
+                  <Box key={group.label} sx={{ mb: 1 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={700} sx={{ pl: 0.5, display: 'block', mb: 0.5 }}>
+                      {group.label}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {group.emojis.map((emoji) => (
+                        <Box
+                          key={emoji}
+                          onClick={() => updateMeta('icon', metaIcon === emoji ? '' : emoji)}
+                          sx={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: 36, height: 36, borderRadius: 1.5, cursor: 'pointer',
+                            fontSize: '1.2rem', transition: 'all 0.15s',
+                            bgcolor: metaIcon === emoji ? (th) => alpha(th.palette.primary.main, 0.15) : 'transparent',
+                            border: '2px solid',
+                            borderColor: metaIcon === emoji ? 'primary.main' : 'transparent',
+                            '&:hover': {
+                              bgcolor: (th) => alpha(th.palette.primary.main, 0.08),
+                              transform: 'scale(1.15)',
+                            },
+                          }}
+                        >
+                          {emoji}
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
+                ))}
+              </Box>
+              {metaIcon && !SKILL_EMOJIS.includes(metaIcon) && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {t('form.metaIconCustom')}: {metaIcon}
+                </Typography>
+              )}
+              <TextField
+                size="small" value={metaIcon}
+                onChange={(e) => updateMeta('icon', e.target.value)}
+                placeholder={t('form.metaIconCustomPlaceholder')}
+                sx={{ mt: 1, width: '100%' }}
+                inputProps={{ style: { fontSize: '0.85rem' } }}
+              />
+            </Box>
 
-                  {/* Level */}
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaLevel')}</Typography>
-                    <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-                      {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((lvl) => {
-                        const sel = metaLevel === lvl;
-                        return (
-                          <Chip key={lvl} label={lvl} size="small" onClick={() => updateMeta('level', sel ? '' : lvl)} sx={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', transition: 'all 0.18s', bgcolor: sel ? 'primary.main' : (th) => alpha(th.palette.text.primary, 0.06), color: sel ? '#fff' : 'text.secondary', border: '1px solid', borderColor: sel ? 'primary.main' : 'transparent', '&:hover': { bgcolor: sel ? 'primary.dark' : (th) => alpha(th.palette.primary.main, 0.1), color: sel ? '#fff' : 'primary.main' } }} />
-                        );
-                      })}
-                    </Stack>
-                  </Box>
+            <Divider />
 
-                  {/* Category */}
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaCategory')}</Typography>
-                    <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-                      {['Frontend', 'Backend', 'Databases', 'Tools', 'DevOps', 'Cloud', 'Mobile'].map((cat) => {
-                        const sel = metaCategory === cat;
-                        return (
-                          <Chip key={cat} label={cat} size="small" onClick={() => updateMeta('category', sel ? '' : cat)} sx={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', transition: 'all 0.18s', bgcolor: sel ? 'secondary.main' : (th) => alpha(th.palette.text.primary, 0.06), color: sel ? '#fff' : 'text.secondary', border: '1px solid', borderColor: sel ? 'secondary.main' : 'transparent', '&:hover': { bgcolor: sel ? 'secondary.dark' : (th) => alpha(th.palette.secondary.main, 0.1), color: sel ? '#fff' : 'secondary.main' } }} />
-                        );
-                      })}
-                    </Stack>
-                  </Box>
+            {/* Level */}
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaLevel')}</Typography>
+              <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((lvl) => {
+                  const sel = metaLevel === lvl;
+                  return (
+                    <Chip key={lvl} label={lvl} size="small" onClick={() => updateMeta('level', sel ? '' : lvl)} sx={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', transition: 'all 0.18s', bgcolor: sel ? 'primary.main' : (th) => alpha(th.palette.text.primary, 0.06), color: sel ? '#fff' : 'text.secondary', border: '1px solid', borderColor: sel ? 'primary.main' : 'transparent', '&:hover': { bgcolor: sel ? 'primary.dark' : (th) => alpha(th.palette.primary.main, 0.1), color: sel ? '#fff' : 'primary.main' } }} />
+                  );
+                })}
+              </Stack>
+            </Box>
 
-                  {/* Technologies */}
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaTechnologies')}</Typography>
-                    {metaTechs.length > 0 && (
-                      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
-                        {metaTechs.map((tech) => (
-                          <Chip key={tech} label={tech} size="small" onDelete={() => removeTech(tech)} sx={{ fontWeight: 600, fontSize: '0.7rem', bgcolor: (th) => alpha(th.palette.primary.main, 0.08), color: 'primary.main', border: '1px solid', borderColor: (th) => alpha(th.palette.primary.main, 0.2) }} />
-                        ))}
-                      </Stack>
-                    )}
-                    <Stack direction="row" spacing={1} alignItems="flex-start">
-                      <TextField size="small" value={techInput} onChange={(e) => setTechInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTech(techInput); } }} placeholder="React, Node.js…" sx={{ flex: 1 }} helperText={t('form.metaTechHint')} />
-                      <IconButton size="small" onClick={() => addTech(techInput)} color="primary" sx={{ mt: 0.5, bgcolor: (th) => alpha(th.palette.primary.main, 0.08), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.14) } }}>
-                        <AddRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </Box>
+            {/* Category */}
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaCategory')}</Typography>
+              <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                {['Frontend', 'Backend', 'Databases', 'Tools', 'DevOps', 'Cloud', 'Mobile'].map((cat) => {
+                  const sel = metaCategory === cat;
+                  return (
+                    <Chip key={cat} label={cat} size="small" onClick={() => updateMeta('category', sel ? '' : cat)} sx={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', transition: 'all 0.18s', bgcolor: sel ? 'secondary.main' : (th) => alpha(th.palette.text.primary, 0.06), color: sel ? '#fff' : 'text.secondary', border: '1px solid', borderColor: sel ? 'secondary.main' : 'transparent', '&:hover': { bgcolor: sel ? 'secondary.dark' : (th) => alpha(th.palette.secondary.main, 0.1), color: sel ? '#fff' : 'secondary.main' } }} />
+                  );
+                })}
+              </Stack>
+            </Box>
 
-                  {/* Years */}
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaYears')}</Typography>
-                    <TextField size="small" type="number" value={metaYears} onChange={(e) => updateMeta('years', e.target.value === '' ? '' : Number(e.target.value))} placeholder="3" sx={{ width: 110 }} inputProps={{ min: 0, max: 50 }} InputProps={{ endAdornment: <InputAdornment position="end"><Typography variant="caption" color="text.secondary">yr</Typography></InputAdornment> }} />
-                  </Box>
+            <Divider />
 
+            {/* Technologies */}
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.75, display: 'block' }}>{t('form.metaTechnologies')}</Typography>
+              {metaTechs.length > 0 && (
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                  {metaTechs.map((tech) => (
+                    <Chip key={tech} label={tech} size="small" onDelete={() => removeTech(tech)} sx={{ fontWeight: 600, fontSize: '0.7rem', bgcolor: (th) => alpha(th.palette.primary.main, 0.08), color: 'primary.main', border: '1px solid', borderColor: (th) => alpha(th.palette.primary.main, 0.2) }} />
+                  ))}
                 </Stack>
-              </AccordionDetails>
-            </Accordion>
+              )}
+              <Stack direction="row" spacing={1} alignItems="flex-start">
+                <TextField size="small" value={techInput} onChange={(e) => setTechInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTech(techInput); } }} placeholder="React, Node.js…" sx={{ flex: 1 }} helperText={t('form.metaTechHint')} />
+                <IconButton size="small" onClick={() => addTech(techInput)} color="primary" sx={{ mt: 0.5, bgcolor: (th) => alpha(th.palette.primary.main, 0.08), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.14) } }}>
+                  <AddRoundedIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            </Box>
 
-            {/* Settings */}
-            <Accordion defaultExpanded disableGutters elevation={0} sx={{ bgcolor: 'transparent', '&::before': { display: 'none' }, border: '1px solid var(--glass-border)', borderRadius: '12px !important' }}>
-              <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={{ px: 2, minHeight: 48, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <TuneRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="body2" fontWeight={700}>{t('form.settings')}</Typography>
-                </Stack>
-              </AccordionSummary>
-              <AccordionDetails sx={{ px: 2, pb: 2 }}>
-                <Stack direction="row" alignItems="center" spacing={3}>
-                  <FormControlLabel
-                    control={<Switch checked={formData.visible ?? true} onChange={(e) => handleFieldChange('visible', e.target.checked)} />}
-                    label={<Typography variant="body2">{t('form.visible')}</Typography>}
-                  />
-                  <TextField label={t('form.order')} type="number" value={formData.order ?? 0} onChange={(e) => handleFieldChange('order', parseInt(e.target.value) || 0)} size="small" sx={{ width: 90 }} />
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
+            {/* Years + Order + Visible inline */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField size="small" type="number" label={t('form.metaYears')} value={metaYears} onChange={(e) => updateMeta('years', e.target.value === '' ? '' : Number(e.target.value))} placeholder="3" sx={{ width: 100 }} inputProps={{ min: 0, max: 50 }} InputProps={{ endAdornment: <InputAdornment position="end"><Typography variant="caption" color="text.secondary">yr</Typography></InputAdornment> }} />
+              <TextField label={t('form.order')} type="number" value={formData.order ?? 0} onChange={(e) => handleFieldChange('order', parseInt(e.target.value) || 0)} size="small" sx={{ width: 90 }} />
+              <FormControlLabel
+                control={<Switch checked={formData.visible ?? true} onChange={(e) => handleFieldChange('visible', e.target.checked)} />}
+                label={<Typography variant="body2">{t('form.visible')}</Typography>}
+              />
+            </Stack>
           </Stack>
         </Box>
 
