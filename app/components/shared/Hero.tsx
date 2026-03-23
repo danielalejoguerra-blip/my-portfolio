@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import Button from "@/app/components/ui/Button";
 import type { PersonalInfo } from "@/types";
 
@@ -69,7 +70,7 @@ export default function Hero({ personalInfo }: HeroProps) {
           <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] p-1">
             <div className="w-full h-full rounded-full bg-[var(--background)] flex items-center justify-center overflow-hidden">
               {avatarUrl ? (
-                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover rounded-full" />
+                <Image src={avatarUrl} alt={fullName} width={128} height={128} priority className="w-full h-full object-cover rounded-full" />
               ) : (
                 <span className="text-4xl font-bold bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)] bg-clip-text text-transparent">
                   {initials}
