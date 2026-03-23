@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+import { ArrowDown, Github, Linkedin, Mail, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Button from "@/app/components/ui/Button";
@@ -11,10 +11,21 @@ interface HeroProps {
   personalInfo?: PersonalInfo | null;
 }
 
+/* ── floating particle ── */
+function Particle({ size, x, y, delay }: { size: number; x: string; y: string; delay: number }) {
+  return (
+    <motion.span
+      className="absolute rounded-full bg-[var(--primary)]/20"
+      style={{ width: size, height: size, left: x, top: y }}
+      animate={{ y: [0, -20, 0], opacity: [0.3, 0.7, 0.3] }}
+      transition={{ duration: 4 + delay, repeat: Infinity, ease: "easeInOut", delay }}
+    />
+  );
+}
+
 export default function Hero({ personalInfo }: HeroProps) {
   const t = useTranslations("hero");
 
-  // Datos dinámicos con fallbacks
   const fullName = personalInfo?.full_name || "Daniel Guerra";
   const nameParts = fullName.split(" ");
   const firstName = nameParts[0] || "Daniel";
@@ -27,159 +38,240 @@ export default function Hero({ personalInfo }: HeroProps) {
   const avatarUrl = personalInfo?.avatar_url || null;
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-start)]/5 via-transparent to-[var(--gradient-end)]/5" />
-      
-      {/* Animated background shapes */}
-      <div className="absolute inset-0 overflow-hidden">
+    <section className="relative h-screen flex flex-col pt-20">
+      {/* ── Fondo ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Gradientes suaves */}
+        <div className="absolute inset-0 bg-[var(--gradient-hero)]" />
         <motion.div
-          className="absolute top-1/4 -left-20 w-72 h-72 bg-[var(--primary)]/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-[var(--gradient-start)]/8 blur-[120px]"
+          animate={{ scale: [1, 1.15, 1], x: [0, 40, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, -30, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
+          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-[var(--gradient-end)]/8 blur-[120px]"
+          animate={{ scale: [1, 1.2, 1], y: [0, -30, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-[var(--accent)]/5 blur-[100px]"
+          animate={{ scale: [1, 1.3, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Partículas */}
+        <Particle size={6} x="10%" y="20%" delay={0} />
+        <Particle size={4} x="80%" y="15%" delay={1.2} />
+        <Particle size={5} x="65%" y="70%" delay={0.8} />
+        <Particle size={3} x="25%" y="75%" delay={2} />
+        <Particle size={7} x="90%" y="50%" delay={0.5} />
+        <Particle size={4} x="45%" y="10%" delay={1.8} />
+        {/* Grid sutil */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: "linear-gradient(var(--foreground) 1px, transparent 1px), linear-gradient(90deg, var(--foreground) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
           }}
         />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Avatar / Photo placeholder */}
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, type: "spring" }}
-          className="mb-8"
-        >
-          <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] p-1">
-            <div className="w-full h-full rounded-full bg-[var(--background)] flex items-center justify-center overflow-hidden">
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt={fullName} width={128} height={128} priority className="w-full h-full object-cover rounded-full" />
-              ) : (
-                <span className="text-4xl font-bold bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)] bg-clip-text text-transparent">
-                  {initials}
+      {/* ── Contenido principal ── */}
+      <div className="relative z-10 flex-1 flex items-center justify-center">
+        <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-16">
+
+            {/* ── Lado izquierdo: texto ── */}
+            <div className="flex-1 text-center lg:text-left">
+              {/* Badge disponible */}
+              <motion.div
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[var(--border)] bg-[var(--secondary)]/50 backdrop-blur-sm mb-6"
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 </span>
-              )}
+                <span className="text-sm font-medium text-[var(--muted-foreground)]">
+                  {t("greeting")}
+                </span>
+              </motion.div>
+
+              {/* Nombre */}
+              <motion.h1
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight mb-4"
+              >
+                <span className="text-[var(--foreground)]">{firstName}</span>
+                <br />
+                <span className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] bg-clip-text text-transparent">
+                  {lastName}
+                </span>
+              </motion.h1>
+
+              {/* Rol con ícono */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex items-center justify-center lg:justify-start gap-2 mb-6"
+              >
+                <Sparkles className="w-5 h-5 text-[var(--accent)]" />
+                <h2 className="text-xl sm:text-2xl font-semibold text-[var(--muted-foreground)]">
+                  {t("role")}
+                </h2>
+              </motion.div>
+
+              {/* Descripción */}
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.45 }}
+                className="text-sm sm:text-base lg:text-lg text-[var(--muted-foreground)] max-w-xl mx-auto lg:mx-0 mb-6 lg:mb-8 leading-relaxed"
+              >
+                {t.rich("description", {
+                  react: (chunks) => <span className="text-[var(--primary)] font-semibold">{chunks}</span>,
+                  nodejs: (chunks) => <span className="text-[var(--accent)] font-semibold">{chunks}</span>,
+                  typescript: (chunks) => <span className="text-[var(--primary)] font-semibold">{chunks}</span>,
+                })}
+              </motion.p>
+
+              {/* Botones */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="flex flex-row gap-3 justify-center lg:justify-start items-center mb-6 lg:mb-8"
+              >
+                <Button size="lg" onClick={() => document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" })}>
+                  {t("viewProjects")}
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}>
+                  {t("contactMe")}
+                </Button>
+              </motion.div>
+
+              {/* Social links */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.75 }}
+                className="flex justify-center lg:justify-start gap-3"
+              >
+                {[
+                  { href: githubUrl, icon: Github, label: "GitHub", external: true },
+                  { href: linkedinUrl, icon: Linkedin, label: "LinkedIn", external: true },
+                  { href: `mailto:${emailAddress}`, icon: Mail, label: "Email", external: false },
+                ].map(({ href, icon: Icon, label, external }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="group relative p-2.5 rounded-xl bg-[var(--secondary)]/60 border border-[var(--border)] backdrop-blur-sm
+                      hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10 transition-all duration-300"
+                    aria-label={label}
+                  >
+                    <Icon className="w-5 h-5 text-[var(--muted-foreground)] group-hover:text-[var(--primary)] transition-colors" />
+                  </a>
+                ))}
+              </motion.div>
             </div>
+
+            {/* ── Lado derecho: avatar ── */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.2, type: "spring", stiffness: 100 }}
+              className="relative flex-shrink-0"
+            >
+              {/* Anillo exterior animado */}
+              <div className="relative w-36 h-36 sm:w-48 sm:h-48 lg:w-72 lg:h-72">
+                {/* Anillo con gradiente giratorio */}
+                <motion.div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: "conic-gradient(from 0deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end), var(--gradient-start))",
+                    padding: "3px",
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                >
+                  <div className="w-full h-full rounded-full bg-[var(--background)]" />
+                </motion.div>
+
+                {/* Glow detrás */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--gradient-start)]/20 via-[var(--gradient-mid)]/10 to-[var(--gradient-end)]/20 blur-2xl scale-110" />
+
+                {/* Avatar */}
+                <div className="absolute inset-2 rounded-full overflow-hidden bg-[var(--secondary)]">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt={fullName}
+                      width={300}
+                      height={300}
+                      priority
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--gradient-start)]/20 to-[var(--gradient-end)]/20">
+                      <span className="text-4xl sm:text-5xl lg:text-7xl font-bold bg-gradient-to-r from-[var(--gradient-start)] to-[var(--accent)] bg-clip-text text-transparent">
+                        {initials}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Orbes flotantes decorativos */}
+                <motion.div
+                  className="absolute -top-2 -right-2 w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-[var(--gradient-start)] flex items-center justify-center shadow-lg shadow-[var(--gradient-start)]/30"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <span className="text-xs lg:text-sm">⚡</span>
+                </motion.div>
+                <motion.div
+                  className="absolute -bottom-1 -left-1 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[var(--accent)] flex items-center justify-center shadow-lg shadow-[var(--accent)]/30"
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <span className="text-xs">💻</span>
+                </motion.div>
+                <motion.div
+                  className="absolute top-1/2 -right-4 lg:-right-5 w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-[var(--gradient-end)] flex items-center justify-center shadow-lg shadow-[var(--gradient-end)]/30"
+                  animate={{ x: [0, 6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
+                  <span className="text-xs">🚀</span>
+                </motion.div>
+              </div>
+            </motion.div>
+
           </div>
-        </motion.div>
-
-        {/* Name and title */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <p className="text-[var(--primary)] font-medium mb-4 tracking-wide">
-            {t("greeting")}
-          </p>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6">
-            <span className="text-[var(--foreground)]">{firstName} </span>
-            <span className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] bg-clip-text text-transparent">
-              {lastName}
-            </span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl text-[var(--muted-foreground)] mb-8">
-            {t("role")}
-          </h2>
-        </motion.div>
-
-        {/* Description */}
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-lg md:text-xl text-[var(--muted-foreground)] max-w-2xl mx-auto mb-12 leading-relaxed"
-        >
-          {t.rich("description", {
-            react: (chunks) => <span className="text-[var(--primary)] font-medium">{chunks}</span>,
-            nodejs: (chunks) => <span className="text-[var(--accent)] font-medium">{chunks}</span>,
-            typescript: (chunks) => <span className="text-[var(--primary)] font-medium">{chunks}</span>,
-          })}
-        </motion.p>
-
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
-        >
-          <Button size="lg" onClick={() => document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" })}>
-            {t("viewProjects")}
-          </Button>
-          <Button variant="outline" size="lg" onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}>
-            {t("contactMe")}
-          </Button>
-        </motion.div>
-
-        {/* Social links */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-          className="flex justify-center gap-6"
-        >
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 hover:scale-110"
-            aria-label="GitHub"
-          >
-            <Github className="w-5 h-5" />
-          </a>
-          <a
-            href={linkedinUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 hover:scale-110"
-            aria-label="LinkedIn"
-          >
-            <Linkedin className="w-5 h-5" />
-          </a>
-          <a
-            href={`mailto:${emailAddress}`}
-            className="p-3 rounded-full bg-[var(--secondary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 hover:scale-110"
-            aria-label="Email"
-          >
-            <Mail className="w-5 h-5" />
-          </a>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="cursor-pointer"
-            onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}
-          >
-            <ArrowDown className="w-6 h-6 text-[var(--muted-foreground)]" />
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
+
+      {/* ── Flecha scroll ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2 }}
+        className="relative z-10 flex justify-center pb-8"
+      >
+        <motion.button
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="p-2 rounded-full border border-[var(--border)] bg-[var(--secondary)]/40 backdrop-blur-sm
+            hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10 transition-all duration-300"
+          onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}
+          aria-label="Scroll down"
+        >
+          <ArrowDown className="w-5 h-5 text-[var(--muted-foreground)]" />
+        </motion.button>
+      </motion.div>
     </section>
   );
 }
