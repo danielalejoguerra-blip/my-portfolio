@@ -5,8 +5,14 @@ import { motion } from "framer-motion";
 import { Mail, MapPin, Send, Linkedin, Github, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Section, Card, Button } from "@/app/components/ui";
+import { contactService } from "@/services";
+import type { PersonalInfo } from "@/types";
 
-export default function Contact() {
+interface ContactProps {
+  personalInfo?: PersonalInfo | null;
+}
+
+export default function Contact({ personalInfo }: ContactProps) {
   const t = useTranslations("contact");
   
   const [formData, setFormData] = useState({
@@ -15,41 +21,56 @@ export default function Contact() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simular envío
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setFormData({ name: "", email: "", message: "" });
-    alert(t("form.success"));
+    setSubmitStatus("idle");
+
+    try {
+      await contactService.send(formData);
+      setSubmitStatus("success");
+      setFormData({ name: "", email: "", message: "" });
+    } catch {
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const socialLinks = personalInfo?.social_links || {};
+  const emailAddress = personalInfo?.email || "danielalejoguerra@gmail.com";
+  const locationValue = personalInfo?.location || "Sogamoso, Boyacá - Colombia";
+  const linkedinUrl = socialLinks.linkedin || "https://linkedin.com/in/daniel-guerra-197551301";
+  const linkedinDisplay = linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com/, "");
+  const githubUrl = socialLinks.github || "https://github.com/DanielWar01";
+  const githubDisplay = `@${githubUrl.split("/").pop() || "DanielWar01"}`;
 
   const contactInfo = [
     {
       icon: Mail,
       label: t("info.email"),
-      value: "danielalejoguerra@gmail.com",
-      href: "mailto:danielalejoguerra@gmail.com",
+      value: emailAddress,
+      href: `mailto:${emailAddress}`,
     },
     {
       icon: MapPin,
       label: t("info.location"),
-      value: "Sogamoso, Boyacá - Colombia",
+      value: locationValue,
       href: null,
     },
     {
       icon: Linkedin,
       label: t("info.linkedin"),
-      value: "/in/daniel-guerra-197551301",
-      href: "https://linkedin.com/in/daniel-guerra-197551301",
+      value: linkedinDisplay,
+      href: linkedinUrl,
     },
     {
       icon: Github,
       label: t("info.github"),
-      value: "@DanielWar01",
-      href: "https://github.com/DanielWar01",
+      value: githubDisplay,
+      href: githubUrl,
     },
   ];
 
@@ -237,6 +258,17 @@ export default function Contact() {
                   </span>
                 )}
               </Button>
+
+              {submitStatus === "success" && (
+                <p className="text-sm text-green-600 dark:text-green-400 text-center">
+                  {t("form.success")}
+                </p>
+              )}
+              {submitStatus === "error" && (
+                <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {t("form.error")}
+                </p>
+              )}
             </form>
           </Card>
         </motion.div>
