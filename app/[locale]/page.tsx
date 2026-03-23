@@ -33,13 +33,13 @@ export default async function Home({ params }: Props) {
 
   // Fetch data from backend (SSR) in parallel
   const [personalInfo, projects, skills, experience, education, courses, blogPosts] = await Promise.all([
-    getPublicPersonalInfo(),
-    getPublicProjects(),
-    getPublicSkills(),
-    getPublicExperience(),
-    getPublicEducation(),
-    getPublicCourses(),
-    getPublicBlog(),
+    getPublicPersonalInfo(locale),
+    getPublicProjects(20, locale),
+    getPublicSkills(40, locale),
+    getPublicExperience(20, locale),
+    getPublicEducation(20, locale),
+    getPublicCourses(20, locale),
+    getPublicBlog(20, locale),
   ]);
 
   return (

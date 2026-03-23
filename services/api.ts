@@ -14,7 +14,7 @@ const api = axios.create({
   withCredentials: true, // Importante para enviar cookies
 });
 
-// Interceptor de request - Agregar CSRF token
+// Interceptor de request - Agregar CSRF token + lang
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Obtener CSRF token de la cookie
@@ -23,6 +23,14 @@ api.interceptors.request.use(
     // Agregar CSRF token al header para requests que lo requieran
     if (csrfToken && ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
       config.headers['X-CSRF-Token'] = csrfToken;
+    }
+
+    // Agregar lang param basado en el locale actual de la URL
+    if (typeof window !== 'undefined' && config.method?.toLowerCase() === 'get') {
+      const pathLocale = window.location.pathname.split('/')[1];
+      if (pathLocale && ['es', 'en'].includes(pathLocale)) {
+        config.params = { ...config.params, lang: pathLocale };
+      }
     }
     
     return config;

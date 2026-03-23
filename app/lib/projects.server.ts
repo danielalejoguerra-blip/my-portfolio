@@ -11,10 +11,11 @@ const API_URL = process.env.REACT_API_HOST;
  * Se usa desde Server Components para SSR.
  * Retorna array vacío si el backend no está disponible o no hay datos.
  */
-export async function getPublicProjects(limit: number = 20): Promise<Project[]> {
+export async function getPublicProjects(limit: number = 20, lang?: string): Promise<Project[]> {
   try {
+    const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : '';
     const response = await fetch(
-      `${API_URL}/projects?limit=${limit}&offset=0`,
+      `${API_URL}/projects?limit=${limit}&offset=0${langParam}`,
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -41,10 +42,11 @@ export async function getPublicProjects(limit: number = 20): Promise<Project[]> 
  * Se usa desde Server Components para SSR.
  * Retorna null si no se encuentra o el backend no está disponible.
  */
-export async function getPublicProjectBySlug(slug: string): Promise<Project | null> {
+export async function getPublicProjectBySlug(slug: string, lang?: string): Promise<Project | null> {
   try {
+    const langParam = lang ? `?lang=${encodeURIComponent(lang)}` : '';
     const response = await fetch(
-      `${API_URL}/projects/${encodeURIComponent(slug)}`,
+      `${API_URL}/projects/${encodeURIComponent(slug)}${langParam}`,
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },

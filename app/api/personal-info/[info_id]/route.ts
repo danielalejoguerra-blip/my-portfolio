@@ -16,8 +16,11 @@ type RouteParams = {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { info_id } = await params;
+    const { searchParams } = new URL(request.url);
+    const lang = searchParams.get('lang') || '';
+    const langParam = lang ? `?lang=${encodeURIComponent(lang)}` : '';
 
-    const response = await fetch(`${API_URL}/personal-info/${info_id}`, {
+    const response = await fetch(`${API_URL}/personal-info/${info_id}${langParam}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',

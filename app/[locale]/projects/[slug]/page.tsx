@@ -11,7 +11,7 @@ export default async function ProjectPage({ params }: Props) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
 
-  const project = await getPublicProjectBySlug(slug);
+  const project = await getPublicProjectBySlug(slug, locale);
 
   if (!project) {
     notFound();

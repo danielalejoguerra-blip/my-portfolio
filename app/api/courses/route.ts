@@ -11,9 +11,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '20';
     const offset = searchParams.get('offset') || '0';
+    const lang = searchParams.get('lang') || '';
+    const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : '';
 
     const response = await fetch(
-      `${API_URL}/courses?limit=${limit}&offset=${offset}`,
+      `${API_URL}/courses?limit=${limit}&offset=${offset}${langParam}`,
       { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store' }
     );
 

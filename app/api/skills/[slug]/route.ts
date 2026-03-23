@@ -11,7 +11,10 @@ type RouteParams = { params: Promise<{ slug: string }> };
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { slug } = await params;
-    const response = await fetch(`${API_URL}/skills/${slug}`, {
+    const { searchParams } = new URL(request.url);
+    const lang = searchParams.get('lang') || '';
+    const langParam = lang ? `?lang=${encodeURIComponent(lang)}` : '';
+    const response = await fetch(`${API_URL}/skills/${slug}${langParam}`, {
       method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
     });
 
