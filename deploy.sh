@@ -100,7 +100,7 @@ info ".env ok"
 section "Configurando nginx del host"
 
 # Si aún no hay certificado, escribir config HTTP-only para que certbot pueda validar
-if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
+if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
   warn "Sin certificado SSL — configurando nginx en modo HTTP para obtenerlo..."
   sudo mkdir -p /var/www/certbot
   sudo tee "$NGINX_SITE" > /dev/null << NGINXHTTP
@@ -131,16 +131,25 @@ NGINXHTTP
   command -v certbot &>/dev/null || error "certbot no está instalado. Instálalo con: sudo apt install certbot python3-certbot-nginx"
   sudo certbot certonly --webroot -w /var/www/certbot \
     -d "${DOMAIN}" -d "www.${DOMAIN}" \
+    --cert-name "${DOMAIN}" \
     --non-interactive --agree-tos --email "admin@${DOMAIN}" \
     || error "certbot falló. Asegúrate de que el DNS de ${DOMAIN} apunte a este servidor."
   info "Certificado obtenido correctamente"
 fi
 
-# ─── Verificar certificado ────────────────────────────────────────────────────
+# ─── Verificar certificado (con detección dinámica de path) ──────────────────
 section "Verificando certificados SSL"
 
-if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
-  error "No se encontró certificado para $DOMAIN en $CERT_PATH tras intentar obtenerlo."
+if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
+  # certbot puede haber guardado el cert bajo otro nombre (ej. danielwar.tech-0001)
+  FOUND=$(sudo find /etc/letsencrypt/live/ -name "fullchain.pem" 2>/dev/null \
+    | grep -i "${DOMAIN}" | head -1 || true)
+  if [[ -n "$FOUND" ]]; then
+    CERT_PATH="$(dirname "$FOUND")"
+    warn "Certificado encontrado en path alternativo: $CERT_PATH"
+  else
+    error "No se encontró certificado para $DOMAIN. Ejecuta: sudo certbot certificates"
+  fi
 fi
 
 EXPIRY=$(sudo openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
