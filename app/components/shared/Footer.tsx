@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Github, Linkedin, Mail } from "lucide-react";
+import { Heart, Github, Linkedin, Mail, Code2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { PersonalInfo } from "@/types";
 
@@ -23,7 +23,38 @@ export default function Footer({ personalInfo }: FooterProps) {
 
   return (
     <footer className="py-12 border-t border-[var(--border)] bg-[var(--card)]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        {/* Source Code Section */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center gap-2 text-(--muted-foreground)">
+            <Code2 className="w-4 h-4" />
+            <span className="text-sm font-medium uppercase tracking-widest">{t("sourceCode")}</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            <a
+              href="https://github.com/danielalejoguerra-blip/my-portfolio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-(--border) bg-(--secondary) hover:border-(--primary) hover:text-(--primary) text-(--muted-foreground) text-sm transition-all duration-300"
+            >
+              <Github className="w-4 h-4" />
+              {t("frontend")}
+            </a>
+            <a
+              href="https://github.com/danielalejoguerra-blip/portfolio_backend"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-(--border) bg-(--secondary) hover:border-(--primary) hover:text-(--primary) text-(--muted-foreground) text-sm transition-all duration-300"
+            >
+              <Github className="w-4 h-4" />
+              {t("backend")}
+            </a>
+          </div>
+        </div>
+
+        <div className="border-t border-(--border)" />
+
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Logo / Name */}
           <div className="text-center md:text-left">
