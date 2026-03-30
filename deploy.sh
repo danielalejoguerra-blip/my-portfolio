@@ -12,7 +12,7 @@ error() { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 # ─── Variables configurables ─────────────────────────────────────────────────
 APP_DIR="${APP_DIR:-/opt/portfolio-frontend}"
 REPO_URL="${REPO_URL:-}"          # e.g. git@github.com:user/my-portfolio.git
-DOMAIN="${DOMAIN:-}"              # e.g. tudominio.com
+DOMAIN="${DOMAIN:-danielwar.tech}"
 BRANCH="${BRANCH:-main}"
 
 # Parsear flags
@@ -99,7 +99,7 @@ if [[ -n "$DOMAIN" ]] && [[ ! -f "$CERT_DIR/fullchain.pem" ]]; then
   sudo cp /etc/letsencrypt/live/"$DOMAIN"/privkey.pem   "$CERT_DIR/privkey.pem"
   sudo chown "$USER:$USER" "$CERT_DIR"/*.pem
   info "Actualizando nginx.conf para el dominio $DOMAIN..."
-  sed -i "s/tudominio.com www.tudominio.com/$DOMAIN www.$DOMAIN/g" "$APP_DIR/nginx/nginx.conf"
+    sed -i "s/danielwar.tech www.danielwar.tech/$DOMAIN www.$DOMAIN/g" "$APP_DIR/nginx/nginx.conf"
 elif [[ ! -f "$CERT_DIR/fullchain.pem" ]]; then
   warn "No se encontraron certificados SSL en $CERT_DIR"
   warn "Para SSL en producción:"
