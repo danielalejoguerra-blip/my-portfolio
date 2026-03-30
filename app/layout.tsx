@@ -14,7 +14,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Daniel Guerra - Full Stack Developer",
-  description: "Portfolio de Daniel Guerra - Desarrollador Full Stack especializado en React, Node.js y TypeScript",
+  description:
+    "Portfolio de Daniel Guerra - Desarrollador Full Stack especializado en React, Node.js y TypeScript",
+  icons: {
+    icon: "/icon",
+    shortcut: "/icon",
+    apple: "/icon",
+  },
 };
 
 export default function RootLayout({
