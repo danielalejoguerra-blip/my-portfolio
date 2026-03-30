@@ -66,13 +66,13 @@ fi
 
 git fetch origin
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse "origin/main")
+REMOTE=$(git rev-parse "origin/master")
 
 if [[ "$LOCAL" == "$REMOTE" ]]; then
   info "Código ya está al día ($(git rev-parse --short HEAD))."
 else
-  info "Actualizando: $(git rev-parse --short HEAD) → $(git rev-parse --short origin/main)"
-  git pull origin main
+  info "Actualizando: $(git rev-parse --short HEAD) → $(git rev-parse --short origin/master)"
+  git pull origin master
 fi
 
 # ─── 3. Verificar .env ────────────────────────────────────────────────────────
