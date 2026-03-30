@@ -90,11 +90,15 @@ mkdir -p "$CERT_DIR"
 if [[ -n "$DOMAIN" ]] && [[ ! -f "$CERT_DIR/fullchain.pem" ]]; then
   info "Obteniendo certificado SSL para $DOMAIN..."
   if ! command -v certbot &>/dev/null; then
-    sudo apt-get install -y certbot
+    sudo apt-get install -y certbot python3-certbot-nginx
   fi
-  sudo certbot certonly --standalone \
+  # Usa el plugin nginx (no necesita liberar el puerto 80)
+  sudo certbot certonly --nginx \
     --non-interactive --agree-tos --register-unsafely-without-email \
-    -d "$DOMAIN" -d "www.$DOMAIN"
+    -d "$DOMAIN" -d "www.$DOMAIN" \
+    || sudo certbot certonly --standalone --http-01-port 8888 \
+        --non-interactive --agree-tos --register-unsafely-without-email \
+        -d "$DOMAIN" -d "www.$DOMAIN"
   sudo cp /etc/letsencrypt/live/"$DOMAIN"/fullchain.pem "$CERT_DIR/fullchain.pem"
   sudo cp /etc/letsencrypt/live/"$DOMAIN"/privkey.pem   "$CERT_DIR/privkey.pem"
   sudo chown "$USER:$USER" "$CERT_DIR"/*.pem
