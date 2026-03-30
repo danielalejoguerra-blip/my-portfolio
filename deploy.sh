@@ -1,174 +1,242 @@
 #!/usr/bin/env bash
-# deploy.sh — Despliega el frontend del portafolio en Ubuntu
-# Uso: bash deploy.sh [--domain tudominio.com] [--repo git@github.com:user/repo.git]
+# =============================================================================
+# deploy.sh — Despliegue del frontend en Ubuntu (danielwar.tech)
+#
+# Arquitectura:
+#   - Next.js corre en Docker en el puerto 127.0.0.1:3001
+#   - El nginx del HOST hace de proxy inverso hacia ese puerto
+#   - NO se levanta un nginx dentro de Docker (el puerto 80/443 ya lo usa el host)
+#
+# Uso:
+#   bash deploy.sh              → primer despliegue o actualización
+#   bash deploy.sh --no-build   → solo reiniciar contenedor sin rebuild
+# =============================================================================
 set -euo pipefail
 
-# ─── Colores ─────────────────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
+# ─── Colores ──────────────────────────────────────────────────────────────────
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
+info()    { echo -e "${GREEN}[✔]${NC} $*"; }
+warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
+error()   { echo -e "${RED}[✘]${NC} $*" >&2; exit 1; }
+section() { echo -e "\n${CYAN}══ $* ══${NC}"; }
 
-# ─── Variables configurables ─────────────────────────────────────────────────
-APP_DIR="${APP_DIR:-/opt/portfolio-frontend}"
-REPO_URL="${REPO_URL:-}"          # e.g. git@github.com:user/my-portfolio.git
-DOMAIN="${DOMAIN:-danielwar.tech}"
-BRANCH="${BRANCH:-main}"
+# ─── Configuración fija del proyecto ─────────────────────────────────────────
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOMAIN="danielwar.tech"
+FRONTEND_PORT="3001"
+NGINX_SITE="/etc/nginx/sites-available/${DOMAIN}"
+NGINX_ENABLED="/etc/nginx/sites-enabled/${DOMAIN}"
+CERT_PATH="/etc/letsencrypt/live/${DOMAIN}"
+NO_BUILD=false
 
-# Parsear flags
+# ─── Flags ────────────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --domain) DOMAIN="$2";   shift 2 ;;
-    --repo)   REPO_URL="$2"; shift 2 ;;
-    --branch) BRANCH="$2";   shift 2 ;;
+    --no-build) NO_BUILD=true; shift ;;
     *) error "Flag desconocido: $1" ;;
   esac
 done
 
-# ─── 1. Dependencias del sistema ─────────────────────────────────────────────
-info "Verificando dependencias del sistema..."
-sudo apt-get update -qq
-
-if ! command -v docker &>/dev/null; then
-  info "Instalando Docker..."
-  sudo apt-get install -y ca-certificates curl gnupg
-  sudo install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-    | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-    https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-    | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  sudo apt-get update -qq
-  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-  sudo systemctl enable --now docker
-  sudo usermod -aG docker "$USER"
-  warn "Docker instalado. Si es la primera vez, cierra sesión y vuelve a entrar para que el grupo 'docker' surta efecto."
-else
-  info "Docker ya instalado: $(docker --version)"
-fi
-
-if ! docker compose version &>/dev/null; then
-  error "docker compose plugin no encontrado. Instala docker-compose-plugin."
-fi
-
-# ─── 2. Directorio de la aplicación ──────────────────────────────────────────
-if [[ -d "$APP_DIR/.git" ]]; then
-  info "Repositorio ya existe. Haciendo pull en $APP_DIR..."
-  git -C "$APP_DIR" fetch origin
-  git -C "$APP_DIR" checkout "$BRANCH"
-  git -C "$APP_DIR" pull origin "$BRANCH"
-elif [[ -n "$REPO_URL" ]]; then
-  info "Clonando repositorio en $APP_DIR..."
-  sudo mkdir -p "$APP_DIR"
-  sudo chown "$USER:$USER" "$APP_DIR"
-  git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
-else
-  # Si se ejecuta desde el directorio del proyecto ya disponible
-  APP_DIR="$(pwd)"
-  info "Usando directorio actual: $APP_DIR"
-fi
-
 cd "$APP_DIR"
 
-# ─── 3. Archivo .env de producción ───────────────────────────────────────────
+# ─── 1. Verificar prerequisitos ───────────────────────────────────────────────
+section "Verificando prerequisitos"
+
+command -v docker      &>/dev/null || error "Docker no está instalado."
+docker compose version &>/dev/null || error "docker compose plugin no encontrado."
+command -v nginx       &>/dev/null || error "Nginx no está instalado en el host."
+
+if ! docker info &>/dev/null; then
+  error "No tienes permisos para usar Docker. Ejecuta: sudo usermod -aG docker \$USER && newgrp docker"
+fi
+
+info "Docker: $(docker --version)"
+info "Nginx:  $(nginx -v 2>&1)"
+
+# ─── 2. Actualizar código fuente ──────────────────────────────────────────────
+section "Actualizando código fuente"
+
+# Guardar cambios locales que no queremos perder (solo .env)
+if git diff --quiet HEAD -- . ':!.env' ':!nginx/certs'; then
+  info "Sin cambios locales relevantes."
+else
+  warn "Hay cambios locales (distintos de .env y certs). Haciendo stash..."
+  git stash push -m "deploy-auto-stash" -- ':!.env' ':!nginx/certs'
+fi
+
+git fetch origin
+LOCAL=$(git rev-parse HEAD)
+REMOTE=$(git rev-parse "origin/main")
+
+if [[ "$LOCAL" == "$REMOTE" ]]; then
+  info "Código ya está al día ($(git rev-parse --short HEAD))."
+else
+  info "Actualizando: $(git rev-parse --short HEAD) → $(git rev-parse --short origin/main)"
+  git pull origin main
+fi
+
+# ─── 3. Verificar .env ────────────────────────────────────────────────────────
+section "Verificando .env"
+
 if [[ ! -f "$APP_DIR/.env" ]]; then
   if [[ -f "$APP_DIR/.env.production.example" ]]; then
     cp "$APP_DIR/.env.production.example" "$APP_DIR/.env"
-    warn "Se creó .env desde .env.production.example"
-    warn "EDITA $APP_DIR/.env con los valores reales antes de continuar."
-    warn "Luego vuelve a ejecutar: bash deploy.sh"
+    warn ".env creado desde .env.production.example"
+    warn "Edita $APP_DIR/.env con los valores correctos y vuelve a ejecutar deploy.sh"
     exit 0
   else
-    error "No existe .env ni .env.production.example en $APP_DIR"
+    error "No existe .env en $APP_DIR"
   fi
 fi
 
-# ─── 4. Certificados SSL (Let's Encrypt con Certbot) ─────────────────────────
-CERT_DIR="$APP_DIR/nginx/certs"
-mkdir -p "$CERT_DIR"
+# Validar variables mínimas requeridas
+REQUIRED_VARS=("REACT_API_HOST" "NEXT_PUBLIC_BACKEND_URL")
+for var in "${REQUIRED_VARS[@]}"; do
+  grep -q "^${var}=" "$APP_DIR/.env" || error "Variable $var no definida en .env"
+done
+info ".env ok"
 
-if [[ -n "$DOMAIN" ]] && [[ ! -f "$CERT_DIR/fullchain.pem" ]]; then
-  info "Obteniendo certificado SSL para $DOMAIN..."
-  if ! command -v certbot &>/dev/null; then
-    sudo apt-get install -y certbot python3-certbot-nginx
-  fi
-  # Usa el plugin nginx (no necesita liberar el puerto 80)
-  sudo certbot certonly --nginx \
-    --non-interactive --agree-tos --register-unsafely-without-email \
-    -d "$DOMAIN" -d "www.$DOMAIN" \
-    || sudo certbot certonly --standalone --http-01-port 8888 \
-        --non-interactive --agree-tos --register-unsafely-without-email \
-        -d "$DOMAIN" -d "www.$DOMAIN"
-  sudo cp /etc/letsencrypt/live/"$DOMAIN"/fullchain.pem "$CERT_DIR/fullchain.pem"
-  sudo cp /etc/letsencrypt/live/"$DOMAIN"/privkey.pem   "$CERT_DIR/privkey.pem"
-  sudo chown "$USER:$USER" "$CERT_DIR"/*.pem
-  info "Actualizando nginx.conf para el dominio $DOMAIN..."
-    sed -i "s/danielwar.tech www.danielwar.tech/$DOMAIN www.$DOMAIN/g" "$APP_DIR/nginx/nginx.conf"
-elif [[ ! -f "$CERT_DIR/fullchain.pem" ]]; then
-  warn "No se encontraron certificados SSL en $CERT_DIR"
-  warn "Para SSL en producción:"
-  warn "  1. Obtén tus certs con: sudo certbot certonly --standalone -d tudominio.com"
-  warn "  2. Cópialos a $CERT_DIR/fullchain.pem y $CERT_DIR/privkey.pem"
-  warn "  3. Vuelve a ejecutar deploy.sh --domain tudominio.com"
-  warn "Continuando sin SSL (sólo HTTP)..."
-  # Reemplaza la config de nginx por una versión solo HTTP si no hay certs
-  cat > "$APP_DIR/nginx/nginx.conf" <<'NGINX'
+# ─── 4. Certificados SSL ──────────────────────────────────────────────────────
+section "Verificando certificados SSL"
+
+if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
+  warn "No se encontró certificado para $DOMAIN en $CERT_PATH"
+  warn "Obtén el certificado con:"
+  warn "  sudo certbot certonly --nginx -d ${DOMAIN} -d www.${DOMAIN}"
+  error "Certificado SSL requerido para continuar."
+fi
+
+EXPIRY=$(sudo openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
+info "Certificado válido hasta: $EXPIRY"
+
+# ─── 5. Configurar nginx del host ─────────────────────────────────────────────
+section "Configurando nginx del host"
+
+sudo tee "$NGINX_SITE" > /dev/null << NGINXCONF
+# Generado por deploy.sh — $(date)
+# Frontend: Next.js en Docker puerto ${FRONTEND_PORT}
+
 server {
     listen 80;
-    server_name _;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    ssl_certificate     ${CERT_PATH}/fullchain.pem;
+    ssl_certificate_key ${CERT_PATH}/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    add_header X-Frame-Options           "SAMEORIGIN"  always;
+    add_header X-Content-Type-Options    "nosniff"     always;
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
+    gzip_types text/plain text/css application/json application/javascript
+               text/xml application/xml image/svg+xml;
+    gzip_min_length 1000;
 
     location /_next/static/ {
-        proxy_pass http://frontend:3000/_next/static/;
+        proxy_pass http://127.0.0.1:${FRONTEND_PORT}/_next/static/;
         expires 1y;
         add_header Cache-Control "public, immutable";
         access_log off;
     }
+
     location / {
-        proxy_pass         http://frontend:3000;
+        proxy_pass         http://127.0.0.1:${FRONTEND_PORT};
         proxy_http_version 1.1;
-        proxy_set_header   Upgrade         $http_upgrade;
-        proxy_set_header   Connection      "upgrade";
-        proxy_set_header   Host            $host;
-        proxy_set_header   X-Real-IP       $remote_addr;
-        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   Upgrade           \$http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_set_header   Host              \$host;
+        proxy_set_header   X-Real-IP         \$remote_addr;
+        proxy_set_header   X-Forwarded-For   \$proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 60s;
     }
 }
-NGINX
+NGINXCONF
+
+# Activar site si no está activado
+if [[ ! -L "$NGINX_ENABLED" ]]; then
+  sudo ln -sf "$NGINX_SITE" "$NGINX_ENABLED"
+  info "Site habilitado en sites-enabled"
 fi
 
-# ─── 5. Build y despliegue ────────────────────────────────────────────────────
-info "Construyendo imagen Docker..."
-docker compose build --no-cache
+# Test y reload
+if sudo nginx -t 2>&1; then
+  sudo systemctl reload nginx
+  info "Nginx recargado correctamente"
+else
+  error "Nginx config inválida. Revisa $NGINX_SITE"
+fi
 
-info "Levantando servicios..."
+# ─── 6. Build y despliegue Docker ─────────────────────────────────────────────
+section "Desplegando contenedor Docker"
+
+if [[ "$NO_BUILD" == false ]]; then
+  info "Construyendo imagen (esto puede tardar unos minutos)..."
+  docker compose build --no-cache
+fi
+
+info "Levantando contenedor..."
 docker compose up -d --remove-orphans
 
-info "Esperando que el servicio esté listo..."
-sleep 5
+# ─── 7. Health check ──────────────────────────────────────────────────────────
+section "Verificando despliegue"
+
+info "Esperando que Next.js arranque..."
+MAX_WAIT=60
+ELAPSED=0
+until curl -sf "http://127.0.0.1:${FRONTEND_PORT}" -o /dev/null 2>&1; do
+  if [[ $ELAPSED -ge $MAX_WAIT ]]; then
+    warn "El servicio no respondió en ${MAX_WAIT}s. Revisa los logs:"
+    docker compose logs --tail=30 frontend
+    error "Health check fallido."
+  fi
+  sleep 2
+  ELAPSED=$((ELAPSED + 2))
+done
+info "Servicio respondiendo en http://127.0.0.1:${FRONTEND_PORT}"
+
 docker compose ps
 
-info "Limpiando imágenes antiguas..."
-docker image prune -f
+# ─── 8. Limpieza ──────────────────────────────────────────────────────────────
+docker image prune -f > /dev/null 2>&1 || true
 
-# ─── 6. Renovación automática de SSL ─────────────────────────────────────────
-if [[ -n "$DOMAIN" ]]; then
-  CRON_JOB="0 3 * * * certbot renew --quiet && cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem ${CERT_DIR}/fullchain.pem && cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem ${CERT_DIR}/privkey.pem && docker compose -f ${APP_DIR}/docker-compose.yml restart nginx"
-  ( crontab -l 2>/dev/null | grep -v 'certbot renew'; echo "$CRON_JOB" ) | crontab -
-  info "Cron de renovación SSL configurado."
-fi
+# ─── 9. Cron de renovación SSL ────────────────────────────────────────────────
+CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
+( crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "$CRON_CMD" ) | crontab -
+info "Cron de renovación SSL configurado"
 
+# ─── Resumen ──────────────────────────────────────────────────────────────────
 echo ""
-echo -e "${GREEN}✔ Despliegue completado.${NC}"
-if [[ -n "$DOMAIN" ]]; then
-  echo -e "  Frontend: ${GREEN}https://$DOMAIN${NC}"
-else
-  echo -e "  Frontend: ${GREEN}http://$(curl -s ifconfig.me 2>/dev/null || echo 'IP_DEL_SERVIDOR')${NC}"
-fi
+echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║        Despliegue completado ✔           ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
-echo "Comandos útiles:"
-echo "  Ver logs:      docker compose -f $APP_DIR/docker-compose.yml logs -f"
-echo "  Reiniciar:     docker compose -f $APP_DIR/docker-compose.yml restart"
-echo "  Parar:         docker compose -f $APP_DIR/docker-compose.yml down"
-echo "  Actualizar:    git -C $APP_DIR pull && bash $APP_DIR/deploy.sh"
+echo -e "  URL:        ${GREEN}https://${DOMAIN}${NC}"
+echo -e "  Contenedor: $(docker compose ps --format '{{.Name}} ({{.Status}})' 2>/dev/null | head -1)"
+echo -e "  Commit:     $(git rev-parse --short HEAD) — $(git log -1 --format='%s')"
+echo ""
+echo "  Comandos útiles:"
+echo "    Logs en vivo:  docker compose logs -f frontend"
+echo "    Reiniciar:     docker compose restart frontend"
+echo "    Actualizar:    bash $APP_DIR/deploy.sh"
+echo "    Solo restart:  bash $APP_DIR/deploy.sh --no-build"
+echo ""
