@@ -156,7 +156,17 @@
     "madeWith": "Made with",
     "in": "in Colombia",
     "location": "in Colombia",
-    "rights": "All rights reserved"
+    "rights": "All rights reserved",
+    "sourceCode": "Source Code",
+    "frontend": "Frontend",
+    "backend": "Backend"
+  },
+  "cookies": {
+    "title": "Privacy & Cookies",
+    "description": "This site uses cookies to improve the browsing experience and analyze anonymous traffic. You can accept all cookies or only use essential ones.",
+    "accept": "Accept all",
+    "reject": "Essential only",
+    "learnMore": "Privacy policy"
   },
   "nav": {
     "about": "About",
