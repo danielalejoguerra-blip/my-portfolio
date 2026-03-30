@@ -156,7 +156,17 @@
     "madeWith": "Hecho con",
     "in": "en Colombia",
     "location": "en Colombia",
-    "rights": "Todos los derechos reservados"
+    "rights": "Todos los derechos reservados",
+    "sourceCode": "Código Fuente",
+    "frontend": "Frontend",
+    "backend": "Backend"
+  },
+  "cookies": {
+    "title": "Privacidad y Cookies",
+    "description": "Este sitio utiliza cookies para mejorar la experiencia de navegación y analizar el tráfico de forma anónima. Puedes aceptar todas las cookies o usar solo las esenciales.",
+    "accept": "Aceptar todas",
+    "reject": "Solo esenciales",
+    "learnMore": "Política de privacidad"
   },
   "nav": {
     "about": "Sobre Mí",
