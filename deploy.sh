@@ -96,21 +96,58 @@ for var in "${REQUIRED_VARS[@]}"; do
 done
 info ".env ok"
 
-# ─── 4. Certificados SSL ──────────────────────────────────────────────────────
+# ─── 4. Configurar nginx del host ─────────────────────────────────────────────
+section "Configurando nginx del host"
+
+# Si aún no hay certificado, escribir config HTTP-only para que certbot pueda validar
+if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
+  warn "Sin certificado SSL — configurando nginx en modo HTTP para obtenerlo..."
+  sudo mkdir -p /var/www/certbot
+  sudo tee "$NGINX_SITE" > /dev/null << NGINXHTTP
+# Generado por deploy.sh (bootstrap) — $(date)
+server {
+    listen 80;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 200 'bootstrapping';
+        add_header Content-Type text/plain;
+    }
+}
+NGINXHTTP
+
+  if [[ ! -L "$NGINX_ENABLED" ]]; then
+    sudo ln -sf "$NGINX_SITE" "$NGINX_ENABLED"
+  fi
+
+  sudo nginx -t 2>&1 && sudo systemctl reload nginx
+
+  # ─── 5. Obtener certificado SSL por primera vez ────────────────────────────
+  section "Obteniendo certificado SSL (primera vez)"
+  command -v certbot &>/dev/null || error "certbot no está instalado. Instálalo con: sudo apt install certbot python3-certbot-nginx"
+  sudo certbot certonly --webroot -w /var/www/certbot \
+    -d "${DOMAIN}" -d "www.${DOMAIN}" \
+    --non-interactive --agree-tos --email "admin@${DOMAIN}" \
+    || error "certbot falló. Asegúrate de que el DNS de ${DOMAIN} apunte a este servidor."
+  info "Certificado obtenido correctamente"
+fi
+
+# ─── Verificar certificado ────────────────────────────────────────────────────
 section "Verificando certificados SSL"
 
 if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
-  warn "No se encontró certificado para $DOMAIN en $CERT_PATH"
-  warn "Obtén el certificado con:"
-  warn "  sudo certbot certonly --nginx -d ${DOMAIN} -d www.${DOMAIN}"
-  error "Certificado SSL requerido para continuar."
+  error "No se encontró certificado para $DOMAIN en $CERT_PATH tras intentar obtenerlo."
 fi
 
 EXPIRY=$(sudo openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
 info "Certificado válido hasta: $EXPIRY"
 
-# ─── 5. Configurar nginx del host ─────────────────────────────────────────────
-section "Configurando nginx del host"
+# ─── Escribir config nginx completa con SSL ───────────────────────────────────
+section "Aplicando configuración nginx con SSL"
 
 sudo tee "$NGINX_SITE" > /dev/null << NGINXCONF
 # Generado por deploy.sh — $(date)
