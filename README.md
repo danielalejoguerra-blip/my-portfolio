@@ -21,6 +21,7 @@ Frontend de un portafolio profesional dinámico construido con **Next.js 16**, *
 - [Sistema de Temas](#-sistema-de-temas)
 - [Analíticas](#-analíticas)
 - [API Proxy](#-api-proxy)
+- [Despliegue en Producción](#-despliegue-en-producción)
 
 ---
 
@@ -421,6 +422,164 @@ Cada recurso tiene rutas adicionales para operaciones admin (`/api/*/admin/*`) c
 
 ---
 
-## 📄 Licencia
+## � Despliegue en Producción
+
+### Arquitectura de producción
+
+```
+Internet
+   │ HTTPS :443
+   ▼
+Nginx (host)          ← proxy inverso + SSL/TLS (Let's Encrypt)
+   │ HTTP 127.0.0.1:3001
+   ▼
+Docker (portfolio-frontend)   ← Next.js standalone en Node 22 Alpine
+   │ HTTP interno
+   ▼
+FastAPI backend (puerto 5003)
+```
+
+> El nginx del **host** gestiona SSL. No se levanta un nginx dentro del contenedor.
+
+---
+
+### Requisitos del servidor
+
+- **OS:** Ubuntu 22.04 LTS (o 24.04)
+- **Docker** + **Docker Compose plugin** (`docker compose version`)
+- **Nginx** (`sudo apt install nginx`)
+- **Certbot** (`sudo apt install certbot python3-certbot-nginx`)
+- **Git**
+- DNS de `danielwar.tech` y `www.danielwar.tech` apuntando a la IP del servidor
+
+---
+
+### Variables de entorno en producción
+
+Crear el archivo `.env` en la raíz del proyecto (no `.env.local`):
+
+```env
+# URL interna del backend (server-side, no expuesto al cliente)
+REACT_API_HOST=http://localhost:5003/api/v1
+
+# URL pública del backend (se incrusta en el bundle del cliente)
+NEXT_PUBLIC_BACKEND_URL=https://api.danielwar.tech
+
+# WebSocket de analíticas
+NEXT_PUBLIC_ANALYTICS_SOCKET_URL=https://api.danielwar.tech
+NEXT_PUBLIC_ANALYTICS_SOCKET_PATH=/ws/socket.io
+NEXT_PUBLIC_ANALYTICS_NAMESPACE=/analytics
+NEXT_PUBLIC_ANALYTICS_ROOM=dashboard
+NEXT_PUBLIC_ANALYTICS_REALTIME_DAYS=7
+```
+
+> **Importante:** Las variables `NEXT_PUBLIC_*` se incrustan en el bundle durante el **build**. Si las cambias, debes reconstruir la imagen (`bash deploy.sh`).
+
+---
+
+### Primer despliegue
+
+```bash
+# 1. Clonar el repositorio en el servidor
+git clone <url-del-repositorio> ~/portfolio-frontend
+cd ~/portfolio-frontend
+
+# 2. Crear el archivo .env con los valores de producción
+cp .env.production.example .env   # si existe, o crear manualmente
+nano .env
+
+# 3. Ejecutar el script de despliegue
+bash deploy.sh
+```
+
+El script `deploy.sh` realiza automáticamente:
+
+1. Verifica dependencias (Docker, Nginx, Certbot)
+2. Actualiza el código desde `origin/master`
+3. Valida que `.env` exista con las variables mínimas requeridas
+4. Configura nginx en modo HTTP para la validación ACME
+5. Obtiene el certificado SSL con Let's Encrypt (solo la primera vez)
+6. Escribe la configuración nginx completa con HTTPS
+7. Construye la imagen Docker multi-stage y levanta el contenedor
+8. Hace health check esperando hasta 60 s a que Next.js arranque
+9. Limpia imágenes Docker obsoletas
+10. Configura el cron de renovación automática del certificado SSL
+
+---
+
+### Actualizaciones
+
+```bash
+# Rebuild completo (nuevo código + nuevas variables)
+bash deploy.sh
+
+# Solo reiniciar el contenedor sin reconstruir la imagen
+bash deploy.sh --no-build
+```
+
+---
+
+### Comandos útiles post-despliegue
+
+```bash
+# Ver logs en tiempo real
+docker compose logs -f frontend
+
+# Reiniciar el contenedor
+docker compose restart frontend
+
+# Ver estado del contenedor
+docker compose ps
+
+# Entrar al contenedor
+docker compose exec frontend sh
+
+# Verificar configuración nginx
+sudo nginx -t
+
+# Recargar nginx manualmente
+sudo systemctl reload nginx
+
+# Ver estado del certificado SSL
+sudo certbot certificates
+
+# Renovar certificado manualmente
+sudo certbot renew --dry-run
+```
+
+---
+
+### Configuración nginx del host
+
+El archivo de configuración nginx se genera automáticamente por `deploy.sh` en:
+
+```
+/etc/nginx/sites-available/danielwar.tech
+/etc/nginx/sites-enabled/danielwar.tech  (symlink)
+```
+
+También encontrarás la plantilla estática en [`nginx/nginx.conf`](nginx/nginx.conf) como referencia. Incluye:
+
+- Redirección HTTP → HTTPS
+- TLS 1.2 / 1.3
+- Headers de seguridad (HSTS, X-Frame-Options, etc.)
+- Gzip para assets de texto
+- Caché permanente para assets estáticos de Next.js (`/_next/static/`)
+- Proxy pass hacia el contenedor Docker en `127.0.0.1:3001`
+
+---
+
+### Docker
+
+| Archivo | Descripción |
+|---------|-------------|
+| `Dockerfile` | Build multi-stage: `deps` → `builder` → `runner` (Node 22 Alpine) |
+| `docker-compose.yml` | Define el servicio `portfolio-frontend`, red `portfolio-net` y mapeo de puertos `127.0.0.1:3001:3000` |
+
+El contenedor expone Next.js en modo **standalone** (`output: 'standalone'` en `next.config.ts`), lo que reduce el tamaño final de la imagen al incluir solo las dependencias necesarias.
+
+---
+
+## �📄 Licencia
 
 Proyecto privado. Todos los derechos reservados.
