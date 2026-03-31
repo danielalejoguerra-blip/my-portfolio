@@ -50,12 +50,12 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div className="min-h-screen bg-(--background) text-(--foreground)">
       {/* Header / Back */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
         <Link
           href={`/${locale}#projects`}
-          className="inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-(--muted-foreground) hover:text-(--primary) transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {t("backToProjects")}
@@ -69,7 +69,7 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="relative w-full aspect-video rounded-[var(--radius-xl)] overflow-hidden cursor-pointer border border-[var(--card-border)]"
+            className="relative w-full aspect-video rounded-xl overflow-hidden cursor-pointer border border-(--card-border)"
             onClick={() => openLightbox(0)}
           >
             <Image
@@ -100,7 +100,7 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
                   href={github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] text-sm hover:bg-[var(--muted)] transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-(--border) text-sm hover:bg-(--muted) transition-colors"
                 >
                   <Github className="w-4 h-4" />
                   {t("viewCode")}
@@ -111,7 +111,7 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
                   href={live}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-lg)] bg-[var(--primary)] text-white text-sm hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--primary) text-white text-sm hover:opacity-90 transition-opacity"
                 >
                   <ExternalLink className="w-4 h-4" />
                   {t("viewLive")}
@@ -121,7 +121,7 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
           </div>
 
           {/* Date */}
-          <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] mb-6">
+          <div className="flex items-center gap-2 text-sm text-(--muted-foreground) mb-6">
             <Calendar className="w-4 h-4" />
             {new Date(project.created_at).toLocaleDateString(locale, {
               year: "numeric",
@@ -145,19 +145,20 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
           {project.description && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-3">{t("description")}</h2>
-              <p className="text-[var(--muted-foreground)] leading-relaxed">
+              <p className="text-(--muted-foreground) leading-relaxed">
                 {project.description}
               </p>
             </div>
           )}
 
-          {/* Content (rich text / markdown) */}
+          {/* Content (rich text / HTML) */}
           {project.content && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-3">{t("details")}</h2>
-              <div className="prose prose-neutral dark:prose-invert max-w-none text-[var(--muted-foreground)] leading-relaxed whitespace-pre-line">
-                {project.content}
-              </div>
+              <div
+                className="prose prose-neutral dark:prose-invert max-w-none text-(--muted-foreground) leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: project.content }}
+              />
             </div>
           )}
 
@@ -172,7 +173,7 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="relative aspect-video rounded-[var(--radius-lg)] overflow-hidden cursor-pointer border border-[var(--card-border)] hover:border-[var(--primary)]/50 transition-colors"
+                    className="relative aspect-video rounded-lg overflow-hidden cursor-pointer border border-(--card-border) hover:border-(--primary)/50 transition-colors"
                     onClick={() => openLightbox(index)}
                   >
                     <Image

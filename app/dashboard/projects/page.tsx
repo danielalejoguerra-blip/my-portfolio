@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks';
 import { projectService } from '@/services';
 import type { Project, ProjectCreate, ProjectUpdate } from '@/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { PageHeader } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
@@ -61,6 +61,7 @@ import DataObjectRoundedIcon from '@mui/icons-material/DataObjectRounded';
 import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
+import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
 
 /* ─── Types ─── */
 type ViewMode = 'cards' | 'table';
@@ -573,7 +574,7 @@ function FormDrawer({
   open, editingId, formData, formError, saving,
   imageUrl, metaKey, metaValue,
   onClose, onSubmit, onFieldChange, onTitleChange,
-  onImageUrlChange, onAddImage, onAddImages, onRemoveImage,
+  onImageUrlChange, onAddImage, onAddImages, onRemoveImage, onReorderImages,
   onMetaKeyChange, onMetaValueChange, onAddMetadata, onRemoveMetadata,
   t,
 }: {
@@ -588,6 +589,7 @@ function FormDrawer({
   onAddImage: () => void;
   onAddImages: (urls: string[]) => void;
   onRemoveImage: (i: number) => void;
+  onReorderImages: (urls: string[]) => void;
   onMetaKeyChange: (v: string) => void;
   onMetaValueChange: (v: string) => void;
   onAddMetadata: () => void;
@@ -697,24 +699,30 @@ function FormDrawer({
           <AccordionDetails sx={{ pt: 0, pb: 2 }}>
             <Stack spacing={1.5}>
               {formData.images && formData.images.length > 0 && (
-                <Stack spacing={0.75}>
+                <Reorder.Group as="div" axis="y" values={formData.images} onReorder={onReorderImages}
+                  style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {formData.images.map((url, idx) => (
-                    <Stack key={idx} direction="row" alignItems="center" spacing={1.5} sx={{
-                      px: 1.5, py: 1, borderRadius: '10px',
-                      bgcolor: (th) => alpha(th.palette.primary.main, 0.04),
-                      border: '1px solid var(--glass-border)',
-                    }}>
-                      <Avatar variant="rounded" src={url} sx={{ width: 40, height: 40, borderRadius: '8px' }}>
-                        <ImageRoundedIcon sx={{ fontSize: 18 }} />
-                      </Avatar>
-                      <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>{url}</Typography>
-                      <IconButton size="small" onClick={() => onRemoveImage(idx)}
-                        sx={{ color: 'error.main', borderRadius: '6px', '&:hover': { bgcolor: (th) => alpha(th.palette.error.main, 0.1) } }}>
-                        <CloseRoundedIcon sx={{ fontSize: 13 }} />
-                      </IconButton>
-                    </Stack>
+                    <Reorder.Item as="div" key={url} value={url} style={{ cursor: 'grab' }}>
+                      <Stack direction="row" alignItems="center" spacing={1.5} sx={{
+                        px: 1.5, py: 1, borderRadius: '10px',
+                        bgcolor: (th) => alpha(th.palette.primary.main, 0.04),
+                        border: '1px solid var(--glass-border)',
+                        userSelect: 'none',
+                      }}>
+                        <DragIndicatorRoundedIcon sx={{ fontSize: 16, color: 'text.disabled', flexShrink: 0 }} />
+                        <Avatar variant="rounded" src={url} sx={{ width: 40, height: 40, borderRadius: '8px' }}>
+                          <ImageRoundedIcon sx={{ fontSize: 18 }} />
+                        </Avatar>
+                        <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>{url}</Typography>
+                        <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0 }}>#{idx + 1}</Typography>
+                        <IconButton size="small" onPointerDown={(e) => e.stopPropagation()} onClick={() => onRemoveImage(idx)}
+                          sx={{ color: 'error.main', borderRadius: '6px', '&:hover': { bgcolor: (th) => alpha(th.palette.error.main, 0.1) } }}>
+                          <CloseRoundedIcon sx={{ fontSize: 13 }} />
+                        </IconButton>
+                      </Stack>
+                    </Reorder.Item>
                   ))}
-                </Stack>
+                </Reorder.Group>
               )}
               <Stack direction="row" spacing={1} alignItems="flex-end">
                 <ImageUrlInput label={t('form.addImage')} value={imageUrl}
@@ -874,6 +882,7 @@ export default function ProjectsPage() {
   const addImage = () => { if (!imageUrl.trim()) return; setFormData((p) => ({ ...p, images: [...(p.images || []), imageUrl.trim()] })); setImageUrl(''); };
   const addImages = (urls: string[]) => { setFormData((p) => ({ ...p, images: [...(p.images || []), ...urls] })); setImageUrl(''); };
   const removeImage = (index: number) => setFormData((p) => ({ ...p, images: (p.images || []).filter((_, i) => i !== index) }));
+  const reorderImages = (urls: string[]) => setFormData((p) => ({ ...p, images: urls }));
 
   const addMetadata = () => {
     if (!metaKey.trim() || !metaValue.trim()) return;
@@ -1033,6 +1042,7 @@ export default function ProjectsPage() {
         onAddImage={addImage}
         onAddImages={addImages}
         onRemoveImage={removeImage}
+        onReorderImages={reorderImages}
         onMetaKeyChange={setMetaKey}
         onMetaValueChange={setMetaValue}
         onAddMetadata={addMetadata}

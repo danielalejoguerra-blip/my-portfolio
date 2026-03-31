@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Calendar, ExternalLink, FileText } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
 import { Section, Card, Badge } from "@/app/components/ui";
 import type { BlogPost } from "@/types";
 
@@ -17,6 +18,8 @@ type BlogCard = {
   slug: string;
   category: string | null;
   featured: boolean;
+  tags: string[];
+  image: string | null;
 };
 
 export default function Blog({ posts }: BlogProps) {
@@ -27,6 +30,8 @@ export default function Blog({ posts }: BlogProps) {
     const metadata = (post.metadata || {}) as Record<string, unknown>;
     const category = typeof metadata.category === "string" ? metadata.category : null;
     const featured = typeof metadata.featured === "boolean" ? metadata.featured : false;
+    const tags = Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [];
+    const image = post.images && post.images.length > 0 ? post.images[0] : null;
     const dateSource = post.published_at || post.created_at;
     const date = new Date(dateSource).toLocaleDateString(locale, {
       year: "numeric",
@@ -41,6 +46,8 @@ export default function Blog({ posts }: BlogProps) {
       slug: post.slug,
       category,
       featured,
+      tags,
+      image,
     };
   });
 
@@ -52,6 +59,8 @@ export default function Blog({ posts }: BlogProps) {
       slug: "",
       category: null,
       featured: false,
+      tags: [],
+      image: null,
     },
   ];
 
@@ -68,12 +77,33 @@ export default function Blog({ posts }: BlogProps) {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.08 }}
           >
-            <Card className="h-full flex flex-col group" whileHover={{ y: -4 }}>
+            <Card className="h-full flex flex-col group overflow-hidden" whileHover={{ y: -4 }}>
+              {/* Cover image */}
+              <div className="relative h-44 -mx-6 -mt-6 mb-4 bg-linear-to-br from-(--gradient-start)/20 via-(--gradient-mid)/20 to-(--gradient-end)/20 rounded-t-xl overflow-hidden">
+                {post.image ? (
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FileText className="w-12 h-12 text-(--primary)/30" />
+                  </div>
+                )}
+                {post.featured && (
+                  <div className="absolute top-3 right-3">
+                    <Badge variant="primary">Featured</Badge>
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-start justify-between mb-3">
                 <div className="p-2.5 rounded-full bg-(--primary)/10 text-(--primary)">
                   <FileText className="w-4 h-4" />
                 </div>
-                {post.featured && <Badge variant="primary">Featured</Badge>}
               </div>
 
               <h3 className="text-lg font-bold text-(--foreground) mb-2 group-hover:text-(--primary) transition-colors">
@@ -102,9 +132,12 @@ export default function Blog({ posts }: BlogProps) {
                 )}
               </div>
 
-              {post.category && (
-                <div className="mt-3">
-                  <Badge variant="outline">{post.category}</Badge>
+              {(post.category || post.tags.length > 0) && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {post.category && <Badge variant="outline">{post.category}</Badge>}
+                  {post.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                  ))}
                 </div>
               )}
             </Card>

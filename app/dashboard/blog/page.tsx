@@ -7,7 +7,7 @@ import { blogService } from '@/services';
 import type { BlogPost, BlogPostCreate, BlogPostUpdate } from '@/types';
 import { PageHeader } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -58,6 +58,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
+import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
 import DataObjectRoundedIcon from '@mui/icons-material/DataObjectRounded';
 
 type FormData = BlogPostCreate & { id?: number };
@@ -456,6 +457,7 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
   const removeImage = (index: number) => {
     setFormData((prev) => ({ ...prev, images: (prev.images || []).filter((_: string, i: number) => i !== index) }));
   };
+  const reorderImages = (urls: string[]) => setFormData((prev) => ({ ...prev, images: urls }));
   const addMetadata = () => {
     if (!metaKey.trim() || !metaValue.trim()) return;
     let parsedValue: unknown = metaValue.trim();
@@ -565,17 +567,26 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
               </AccordionSummary>
               <AccordionDetails sx={{ px: 2, pb: 2 }}>
                 <Stack spacing={1.5}>
-                  {formData.images && formData.images.map((imgUrl: string, index: number) => (
-                    <Stack key={index} direction="row" alignItems="center" spacing={1} sx={{ p: 1, borderRadius: 2, bgcolor: (th) => alpha(th.palette.divider, 0.04), border: '1px solid', borderColor: 'divider' }}>
-                      <Avatar variant="rounded" src={imgUrl} sx={{ width: 36, height: 36, borderRadius: 1.5 }}>
-                        <ImageRoundedIcon />
-                      </Avatar>
-                      <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>{imgUrl}</Typography>
-                      <IconButton size="small" color="error" onClick={() => removeImage(index)}>
-                        <CloseRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  ))}
+                  {formData.images && formData.images.length > 0 && (
+                    <Reorder.Group as="div" axis="y" values={formData.images ?? []} onReorder={reorderImages}
+                      style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {formData.images.map((imgUrl: string, index: number) => (
+                        <Reorder.Item as="div" key={imgUrl} value={imgUrl} style={{ cursor: 'grab' }}>
+                          <Stack direction="row" alignItems="center" spacing={1} sx={{ p: 1, borderRadius: 2, bgcolor: (th) => alpha(th.palette.divider, 0.04), border: '1px solid', borderColor: 'divider', userSelect: 'none' }}>
+                            <DragIndicatorRoundedIcon sx={{ fontSize: 15, color: 'text.disabled', flexShrink: 0 }} />
+                            <Avatar variant="rounded" src={imgUrl} sx={{ width: 36, height: 36, borderRadius: 1.5 }}>
+                              <ImageRoundedIcon />
+                            </Avatar>
+                            <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>{imgUrl}</Typography>
+                            <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0 }}>#{index + 1}</Typography>
+                            <IconButton size="small" color="error" onPointerDown={(e) => e.stopPropagation()} onClick={() => removeImage(index)}>
+                              <CloseRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </Reorder.Item>
+                      ))}
+                    </Reorder.Group>
+                  )}
                   <Stack direction="row" spacing={1} alignItems="flex-end">
                     <ImageUrlInput label={t('form.addImage')} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." onBulkAdd={addImages} />
                     <IconButton onClick={(e) => { e.preventDefault(); addImage(); }} color="primary" sx={{ bgcolor: (th) => alpha(th.palette.primary.main, 0.08), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.14) } }}>
