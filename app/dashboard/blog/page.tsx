@@ -851,7 +851,6 @@ export default function BlogPage() {
         imageUrl={imageUrl} setImageUrl={setImageUrl}
         metaKey={metaKey} setMetaKey={setMetaKey}
         metaValue={metaValue} setMetaValue={setMetaValue}
-        useScheduledDate={useScheduledDate} setUseScheduledDate={setUseScheduledDate}
         publishStatus={publishStatus} setPublishStatus={setPublishStatus}
       />
     </Box>
