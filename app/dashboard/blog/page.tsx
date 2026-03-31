@@ -739,7 +739,10 @@ export default function BlogPage() {
   };
   const closeForm = () => {
     setShowForm(false); setEditingId(null); setFormData(emptyForm); setFormError(null);
-    setImageUrl(''); setMetaKey(''); setMetaValue(''); setUseScheduledDate(false); setPublishStatus('draft'); = async (e: React.FormEvent) => {
+    setImageUrl(''); setMetaKey(''); setMetaValue(''); setUseScheduledDate(false); setPublishStatus('draft');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { setFormError(t('errors.titleRequired')); return; }
     setSaving(true); setFormError(null);
