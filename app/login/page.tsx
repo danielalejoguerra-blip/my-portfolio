@@ -33,6 +33,8 @@ import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
 import NextLink from 'next/link';
 
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +85,26 @@ export default function LoginPage() {
       {/* Decorative background blobs */}
       <Box sx={{ position: 'absolute', top: -160, right: -160, width: 384, height: 384, borderRadius: '50%', bgcolor: 'primary.main', opacity: 0.06, filter: 'blur(80px)', pointerEvents: 'none' }} />
       <Box sx={{ position: 'absolute', bottom: -160, left: -160, width: 384, height: 384, borderRadius: '50%', bgcolor: 'secondary.main', opacity: 0.06, filter: 'blur(80px)', pointerEvents: 'none' }} />
+
+      {/* Back to home button */}
+      <IconButton
+        component={NextLink}
+        href="/"
+        aria-label="Ir al inicio"
+        sx={{
+          position: 'fixed',
+          top: 16,
+          left: 16,
+          zIndex: 10,
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          '&:hover': { bgcolor: 'action.hover' },
+        }}
+      >
+        <HomeRoundedIcon sx={{ fontSize: 22 }} />
+      </IconButton>
 
       <Grid container spacing={3} sx={{ maxWidth: 960, position: 'relative', zIndex: 1 }}>
         {/* Left: features panel */}

@@ -7,6 +7,7 @@ import { projectService } from '@/services';
 import type { Project, ProjectCreate, ProjectUpdate } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/app/dashboard/_components';
+import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -715,7 +716,7 @@ function FormDrawer({
                 </Stack>
               )}
               <Stack direction="row" spacing={1} alignItems="flex-end">
-                <TextField label={t('form.addImage')} value={imageUrl}
+                <ImageUrlInput label={t('form.addImage')} value={imageUrl}
                   onChange={(e) => onImageUrlChange(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddImage(); } }}
                   size="small" sx={{ flex: 1 }} placeholder="https://..." />

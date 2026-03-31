@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks';
 import { blogService } from '@/services';
 import type { BlogPost, BlogPostCreate, BlogPostUpdate } from '@/types';
 import { PageHeader } from '@/app/dashboard/_components';
+import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Box from '@mui/material/Box';
@@ -571,7 +572,7 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
                     </Stack>
                   ))}
                   <Stack direction="row" spacing={1} alignItems="flex-end">
-                    <TextField label={t('form.addImage')} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." />
+                    <ImageUrlInput label={t('form.addImage')} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." />
                     <IconButton onClick={(e) => { e.preventDefault(); addImage(); }} color="primary" sx={{ bgcolor: (th) => alpha(th.palette.primary.main, 0.08), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.14) } }}>
                       <AddRoundedIcon />
                     </IconButton>

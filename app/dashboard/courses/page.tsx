@@ -7,6 +7,7 @@ import { courseService } from '@/services';
 import type { Course, CourseCreate, CourseUpdate } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/app/dashboard/_components';
+import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -556,7 +557,7 @@ function FormDrawer({
                 </Stack>
               )}
               <Stack direction="row" spacing={1} alignItems="flex-end">
-                <TextField label={t('form.addImage')} value={imageUrl} onChange={(e) => onImageUrlChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." />
+                <ImageUrlInput label={t('form.addImage')} value={imageUrl} onChange={(e) => onImageUrlChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." />
                 <IconButton onClick={(e) => { e.preventDefault(); onAddImage(); }} color="primary" sx={{ mb: 0.25, borderRadius: '10px', bgcolor: (th) => alpha(th.palette.primary.main, 0.1), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.18) } }}><AddRoundedIcon /></IconButton>
               </Stack>
             </Stack>

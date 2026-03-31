@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks';
 import { personalInfoService } from '@/services';
 import type { PersonalInfo, PersonalInfoCreate, PersonalInfoUpdate } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -884,7 +885,7 @@ function FormDrawer({
                 >
                   <PersonRoundedIcon sx={{ fontSize: 24 }} />
                 </Avatar>
-                <TextField
+                <ImageUrlInput
                   fullWidth label={t('form.avatarUrl')} value={formData.avatar_url || ''}
                   onChange={(e) => onFieldChange('avatar_url', e.target.value)}
                   size="small" placeholder="https://..."

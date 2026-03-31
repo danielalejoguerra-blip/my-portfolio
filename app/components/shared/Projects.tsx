@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ExternalLink, Github, Folder } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Section, Card, Badge } from "@/app/components/ui";
 import type { Project } from "@/types";
 
@@ -27,6 +27,7 @@ interface ProjectsProps {
 export default function Projects({ projects: backendProjects }: ProjectsProps) {
   const t = useTranslations("projects");
   const locale = useLocale();
+  const router = useRouter();
 
   // Map backend data → internal render type
   const fromBackend: ProjectItem[] = (backendProjects || []).map((p) => ({
@@ -125,10 +126,10 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            <Link href={`/${locale}/projects/${project.slug}`}>
             <Card
               className="h-full flex flex-col group cursor-pointer"
               whileHover={{ y: -5 }}
+              onClick={() => router.push(`/${locale}/projects/${project.slug}`)}
             >
               {/* Project image */}
               <div className="relative h-48 -mx-6 -mt-6 mb-4 bg-gradient-to-br from-[var(--gradient-start)]/20 via-[var(--gradient-mid)]/20 to-[var(--gradient-end)]/20 rounded-t-[var(--radius-xl)] overflow-hidden">
@@ -155,6 +156,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
                       rel="noopener noreferrer"
                       className="p-3 bg-[var(--background)] rounded-full hover:scale-110 transition-transform"
                       aria-label="Ver código en GitHub"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Github className="w-5 h-5" />
                     </a>
@@ -166,6 +168,7 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
                       rel="noopener noreferrer"
                       className="p-3 bg-[var(--background)] rounded-full hover:scale-110 transition-transform"
                       aria-label="Ver proyecto en vivo"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <ExternalLink className="w-5 h-5" />
                     </a>
@@ -197,7 +200,6 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
                 </div>
               </div>
             </Card>
-            </Link>
           </motion.div>
         ))}
       </div>
