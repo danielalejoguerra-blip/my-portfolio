@@ -572,7 +572,7 @@ function FormDrawer({
   open, editingId, formData, formError, saving,
   imageUrl, metaKey, metaValue,
   onClose, onSubmit, onFieldChange, onTitleChange,
-  onImageUrlChange, onAddImage, onRemoveImage,
+  onImageUrlChange, onAddImage, onAddImages, onRemoveImage,
   onMetaKeyChange, onMetaValueChange, onAddMetadata, onRemoveMetadata,
   t,
 }: {
@@ -585,6 +585,7 @@ function FormDrawer({
   onTitleChange: (v: string) => void;
   onImageUrlChange: (v: string) => void;
   onAddImage: () => void;
+  onAddImages: (urls: string[]) => void;
   onRemoveImage: (i: number) => void;
   onMetaKeyChange: (v: string) => void;
   onMetaValueChange: (v: string) => void;
@@ -718,7 +719,7 @@ function FormDrawer({
                 <ImageUrlInput label={t('form.addImage')} value={imageUrl}
                   onChange={(e) => onImageUrlChange(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddImage(); } }}
-                  size="small" sx={{ flex: 1 }} placeholder="https://..." />
+                  size="small" sx={{ flex: 1 }} placeholder="https://..." onBulkAdd={onAddImages} />
                 <IconButton onClick={(e) => { e.preventDefault(); onAddImage(); }} color="primary"
                   sx={{ mb: 0.25, borderRadius: '10px', bgcolor: (th) => alpha(th.palette.primary.main, 0.1), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.18) } }}>
                   <AddRoundedIcon />
@@ -870,6 +871,7 @@ export default function ExperiencePage() {
     setFormData((p) => ({ ...p, title: value, ...(!editingId ? { slug: generateSlug(value) } : {}) }));
 
   const addImage = () => { if (!imageUrl.trim()) return; setFormData((p) => ({ ...p, images: [...(p.images || []), imageUrl.trim()] })); setImageUrl(''); };
+  const addImages = (urls: string[]) => { setFormData((p) => ({ ...p, images: [...(p.images || []), ...urls] })); setImageUrl(''); };
   const removeImage = (index: number) => setFormData((p) => ({ ...p, images: (p.images || []).filter((_, i) => i !== index) }));
 
   const addMetadata = () => {
@@ -1028,6 +1030,7 @@ export default function ExperiencePage() {
         onTitleChange={handleTitleChange}
         onImageUrlChange={setImageUrl}
         onAddImage={addImage}
+        onAddImages={addImages}
         onRemoveImage={removeImage}
         onMetaKeyChange={setMetaKey}
         onMetaValueChange={setMetaValue}

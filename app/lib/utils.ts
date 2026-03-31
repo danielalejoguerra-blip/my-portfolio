@@ -13,21 +13,22 @@ export function normalizeImageUrl(url: string): string {
   const trimmed = url.trim();
 
   // Google Drive: /file/d/{ID}/view or /file/d/{ID}/preview
+  // Note: uc?export=view is deprecated and returns 403 — use thumbnail endpoint instead
   const gdriveFile = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (gdriveFile) {
-    return `https://drive.google.com/uc?export=view&id=${gdriveFile[1]}`;
+    return `https://drive.google.com/thumbnail?id=${gdriveFile[1]}&sz=w1600`;
   }
 
   // Google Drive: open?id={ID}
   const gdriveOpen = trimmed.match(/drive\.google\.com\/open\?[^#]*id=([a-zA-Z0-9_-]+)/);
   if (gdriveOpen) {
-    return `https://drive.google.com/uc?export=view&id=${gdriveOpen[1]}`;
+    return `https://drive.google.com/thumbnail?id=${gdriveOpen[1]}&sz=w1600`;
   }
 
-  // Google Drive: uc?id={ID} (without export=view)
+  // Google Drive: uc?id={ID}
   const gdriveUc = trimmed.match(/drive\.google\.com\/uc\?[^#]*\bid=([a-zA-Z0-9_-]+)/);
-  if (gdriveUc && !trimmed.includes('export=view')) {
-    return `https://drive.google.com/uc?export=view&id=${gdriveUc[1]}`;
+  if (gdriveUc) {
+    return `https://drive.google.com/thumbnail?id=${gdriveUc[1]}&sz=w1600`;
   }
 
   // Imgur: https://imgur.com/{ID}  (not i.imgur.com, not /a/ albums)

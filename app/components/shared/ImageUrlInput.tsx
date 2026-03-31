@@ -13,11 +13,21 @@ import { normalizeImageUrl } from '@/app/lib/utils';
  * (Google Drive, Imgur, Dropbox) to direct/embeddable image URLs.
  * A green checkmark adornment appears when a URL has been converted.
  */
-export default function ImageUrlInput({ onChange, slotProps, ...props }: TextFieldProps) {
+export default function ImageUrlInput({ onChange, onBulkAdd, slotProps, ...props }: TextFieldProps & { onBulkAdd?: (urls: string[]) => void }) {
   const [converted, setConverted] = useState(false);
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pasted = e.clipboardData.getData('text');
+
+    // Multiple URLs separated by comma or newline
+    const parts = pasted.split(/[\n,]+/).map(s => s.trim()).filter(s => s.startsWith('http'));
+    if (parts.length > 1 && onBulkAdd) {
+      e.preventDefault();
+      onBulkAdd(parts.map(normalizeImageUrl));
+      setConverted(false);
+      return;
+    }
+
     const normalized = normalizeImageUrl(pasted);
     if (normalized !== pasted) {
       e.preventDefault();

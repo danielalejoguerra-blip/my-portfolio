@@ -448,6 +448,11 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
     setFormData((prev) => ({ ...prev, images: [...(prev.images || []), imageUrl.trim()] }));
     setImageUrl('');
   };
+  const addImages = (urls: string[]) => {
+    if (!urls.length) return;
+    setFormData((prev) => ({ ...prev, images: [...(prev.images || []), ...urls] }));
+    setImageUrl('');
+  };
   const removeImage = (index: number) => {
     setFormData((prev) => ({ ...prev, images: (prev.images || []).filter((_: string, i: number) => i !== index) }));
   };
@@ -572,7 +577,7 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
                     </Stack>
                   ))}
                   <Stack direction="row" spacing={1} alignItems="flex-end">
-                    <ImageUrlInput label={t('form.addImage')} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." />
+                    <ImageUrlInput label={t('form.addImage')} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }} size="small" sx={{ flex: 1 }} placeholder="https://..." onBulkAdd={addImages} />
                     <IconButton onClick={(e) => { e.preventDefault(); addImage(); }} color="primary" sx={{ bgcolor: (th) => alpha(th.palette.primary.main, 0.08), '&:hover': { bgcolor: (th) => alpha(th.palette.primary.main, 0.14) } }}>
                       <AddRoundedIcon />
                     </IconButton>
