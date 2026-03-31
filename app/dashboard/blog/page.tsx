@@ -38,6 +38,8 @@ import Drawer from '@mui/material/Drawer';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import ToggleButton from '@mui/material/ToggleButton';
 import { alpha } from '@mui/material/styles';
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -423,7 +425,7 @@ function BlogTable({ items, onEdit, onDelete, onHardDelete, onRestore, t }: {
 
 // ─── FormDrawer ───────────────────────────────────────────────────────────────
 function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit, saving, formError, t,
-  imageUrl, setImageUrl, metaKey, setMetaKey, metaValue, setMetaValue, useScheduledDate, setUseScheduledDate,
+  imageUrl, setImageUrl, metaKey, setMetaKey, metaValue, setMetaValue, publishStatus, setPublishStatus,
 }: {
   open: boolean; onClose: () => void; editingId: number | null;
   formData: FormData; setFormData: React.Dispatch<React.SetStateAction<FormData>>;
@@ -432,7 +434,7 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
   imageUrl: string; setImageUrl: (v: string) => void;
   metaKey: string; setMetaKey: (v: string) => void;
   metaValue: string; setMetaValue: (v: string) => void;
-  useScheduledDate: boolean; setUseScheduledDate: (v: boolean) => void;
+  publishStatus: 'draft' | 'published' | 'scheduled'; setPublishStatus: (v: 'draft' | 'published' | 'scheduled') => void;
 }) {
 
   const generateSlug = (title: string) =>
@@ -535,14 +537,33 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
               </AccordionSummary>
               <AccordionDetails sx={{ px: 2, pb: 2 }}>
                 <Stack spacing={2}>
-                  <FormControlLabel
-                    control={<Switch checked={useScheduledDate} onChange={(e) => {
-                      setUseScheduledDate(e.target.checked);
-                      if (!e.target.checked) handleFieldChange('published_at', null);
-                    }} />}
-                    label={<Typography variant="body2">{t('form.schedulePublish')}</Typography>}
-                  />
-                  {useScheduledDate && (
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>{t('form.publishStatus')}</Typography>
+                  <ToggleButtonGroup
+                    value={publishStatus}
+                    exclusive
+                    onChange={(_, val) => {
+                      if (!val) return;
+                      setPublishStatus(val);
+                      if (val === 'draft') handleFieldChange('published_at', null);
+                      else if (val === 'published') handleFieldChange('published_at', new Date().toISOString());
+                    }}
+                    size="small"
+                    fullWidth
+                  >
+                    <ToggleButton value="draft" sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+                      <ScheduleRoundedIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                      {t('form.publishDraft')}
+                    </ToggleButton>
+                    <ToggleButton value="published" sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+                      <PublishRoundedIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                      {t('form.publishNow')}
+                    </ToggleButton>
+                    <ToggleButton value="scheduled" sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+                      <CheckRoundedIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                      {t('form.publishSchedule')}
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                  {publishStatus === 'scheduled' && (
                     <TextField fullWidth label={t('form.publishedAt')} type="datetime-local"
                       value={formData.published_at ? formData.published_at.slice(0, 16) : ''}
                       onChange={(e) => handleFieldChange('published_at', e.target.value ? new Date(e.target.value).toISOString() : null)}
@@ -680,6 +701,7 @@ export default function BlogPage() {
   const [metaKey, setMetaKey] = useState('');
   const [metaValue, setMetaValue] = useState('');
   const [useScheduledDate, setUseScheduledDate] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published' | 'scheduled'>('draft');
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -701,7 +723,7 @@ export default function BlogPage() {
 
   const openCreateForm = () => {
     setEditingId(null); setFormData(emptyForm); setFormError(null);
-    setImageUrl(''); setMetaKey(''); setMetaValue(''); setUseScheduledDate(false);
+    setImageUrl(''); setMetaKey(''); setMetaValue(''); setUseScheduledDate(false); setPublishStatus('draft');
     setShowForm(true);
   };
   const openEditForm = (item: BlogPost) => {
@@ -709,16 +731,15 @@ export default function BlogPage() {
     setFormData({ title: item.title, slug: item.slug, description: item.description || '', content: item.content || '', images: item.images || [], metadata: item.metadata || {}, visible: item.visible, published_at: item.published_at });
     setFormError(null);
     setImageUrl(''); setMetaKey(''); setMetaValue('');
-    const isScheduled = item.published_at != null && new Date(item.published_at) > new Date();
-    setUseScheduledDate(isScheduled);
+    if (!item.published_at) setPublishStatus('draft');
+    else if (new Date(item.published_at) > new Date()) setPublishStatus('scheduled');
+    else setPublishStatus('published');
+    setUseScheduledDate(false);
     setShowForm(true);
   };
   const closeForm = () => {
     setShowForm(false); setEditingId(null); setFormData(emptyForm); setFormError(null);
-    setImageUrl(''); setMetaKey(''); setMetaValue(''); setUseScheduledDate(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+    setImageUrl(''); setMetaKey(''); setMetaValue(''); setUseScheduledDate(false); setPublishStatus('draft'); = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { setFormError(t('errors.titleRequired')); return; }
     setSaving(true); setFormError(null);
@@ -828,6 +849,7 @@ export default function BlogPage() {
         metaKey={metaKey} setMetaKey={setMetaKey}
         metaValue={metaValue} setMetaValue={setMetaValue}
         useScheduledDate={useScheduledDate} setUseScheduledDate={setUseScheduledDate}
+        publishStatus={publishStatus} setPublishStatus={setPublishStatus}
       />
     </Box>
   );
