@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.REACT_API_HOST;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 /**
  * GET /api/personal-info/admin/all — Lista admin de todos los registros

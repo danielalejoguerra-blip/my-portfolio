@@ -4,12 +4,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.REACT_API_HOST;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function POST(request: NextRequest) {
   try {
     if (!API_URL) {
-      return NextResponse.json({ message: 'REACT_API_HOST no está configurado' }, { status: 500 });
+      return NextResponse.json({ message: 'NEXT_PUBLIC_BACKEND_URL no está configurado' }, { status: 500 });
     }
 
     const contentType = request.headers.get('content-type');
