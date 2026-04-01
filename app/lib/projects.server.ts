@@ -4,7 +4,7 @@
 
 import type { Project, ProjectListResponse } from '@/types';
 
-const API_URL = process.env.REACT_API_HOST;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 /**
  * Obtiene la lista de proyectos publicados.

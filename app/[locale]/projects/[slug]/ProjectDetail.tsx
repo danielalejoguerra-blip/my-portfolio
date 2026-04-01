@@ -10,6 +10,7 @@ import {
   ChevronRight,
   X,
   Calendar,
+  BookOpen,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
@@ -27,11 +28,15 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
   const metadata = (project.metadata as Record<string, unknown>) || {};
-  const technologies = Array.isArray(metadata.technologies)
-    ? (metadata.technologies as string[])
+  const links = (metadata.links as Record<string, string>) || {};
+  const technologies = Array.isArray(metadata.tech_stack)
+    ? (metadata.tech_stack as string[])
     : [];
-  const github = (metadata.github as string) || null;
-  const live = (metadata.live as string) || null;
+  const github = links.github || null;
+  const live = links.demo || null;
+  const docs = links.docs || null;
+  const category = (metadata.category as string) || null;
+  const status = (metadata.status as string) || null;
   const images = project.images || [];
 
   const openLightbox = (index: number) => setSelectedImage(index);
@@ -106,6 +111,17 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
                   {t("viewCode")}
                 </a>
               )}
+              {docs && (
+                <a
+                  href={docs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-(--border) text-sm hover:bg-(--muted) transition-colors"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Docs
+                </a>
+              )}
               {live && (
                 <a
                   href={live}
@@ -120,14 +136,22 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
             </div>
           </div>
 
-          {/* Date */}
-          <div className="flex items-center gap-2 text-sm text-(--muted-foreground) mb-6">
-            <Calendar className="w-4 h-4" />
-            {new Date(project.created_at).toLocaleDateString(locale, {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+          {/* Date + badges */}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <div className="flex items-center gap-2 text-sm text-(--muted-foreground)">
+              <Calendar className="w-4 h-4" />
+              {new Date(project.created_at).toLocaleDateString(locale, {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </div>
+            {category && <Badge variant="outline">{category}</Badge>}
+            {status && (
+              <Badge variant={status === "completed" ? "primary" : "secondary"}>
+                {status.replace("_", " ")}
+              </Badge>
+            )}
           </div>
 
           {/* Technologies */}

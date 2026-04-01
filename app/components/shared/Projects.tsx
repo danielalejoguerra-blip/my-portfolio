@@ -30,18 +30,22 @@ export default function Projects({ projects: backendProjects }: ProjectsProps) {
   const router = useRouter();
 
   // Map backend data → internal render type
-  const fromBackend: ProjectItem[] = (backendProjects || []).map((p) => ({
-    slug: p.slug,
-    title: p.title,
-    description: p.description || '',
-    image: p.images && p.images.length > 0 ? p.images[0] : null,
-    technologies: Array.isArray((p.metadata as Record<string, unknown>)?.technologies)
-      ? ((p.metadata as Record<string, unknown>).technologies as string[])
-      : [],
-    github: ((p.metadata as Record<string, unknown>)?.github as string) || null,
-    live: ((p.metadata as Record<string, unknown>)?.live as string) || null,
-    featured: ((p.metadata as Record<string, unknown>)?.featured as boolean) || false,
-  }));
+  const fromBackend: ProjectItem[] = (backendProjects || []).map((p) => {
+    const meta = (p.metadata as Record<string, unknown>) || {};
+    const links = (meta.links as Record<string, string>) || {};
+    return {
+      slug: p.slug,
+      title: p.title,
+      description: p.description || '',
+      image: p.images && p.images.length > 0 ? p.images[0] : null,
+      technologies: Array.isArray(meta.tech_stack)
+        ? (meta.tech_stack as string[])
+        : [],
+      github: links.github || null,
+      live: links.demo || null,
+      featured: (meta.featured as boolean) || false,
+    };
+  });
 
   // Fallback: hardcoded i18n projects when backend returns nothing
   const fallbackProjects: ProjectItem[] = [

@@ -4,7 +4,7 @@
 
 import type { PersonalInfo, PersonalInfoListResponse } from '@/types';
 
-const API_URL = process.env.REACT_API_HOST;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 /**
  * Obtiene la información personal pública principal (primer registro).

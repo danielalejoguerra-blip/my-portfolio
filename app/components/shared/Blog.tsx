@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, ExternalLink, FileText } from "lucide-react";
+import { Calendar, ExternalLink, FileText, Clock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
+import Link from "next/link";
 import { Section, Card, Badge } from "@/app/components/ui";
 import type { BlogPost } from "@/types";
 
@@ -19,6 +20,7 @@ type BlogCard = {
   category: string | null;
   featured: boolean;
   tags: string[];
+  readingTime: number | null;
   image: string | null;
 };
 
@@ -31,6 +33,7 @@ export default function Blog({ posts }: BlogProps) {
     const category = typeof metadata.category === "string" ? metadata.category : null;
     const featured = typeof metadata.featured === "boolean" ? metadata.featured : false;
     const tags = Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [];
+    const readingTime = typeof metadata.reading_time === "number" ? metadata.reading_time : null;
     const image = post.images && post.images.length > 0 ? post.images[0] : null;
     const dateSource = post.published_at || post.created_at;
     const date = new Date(dateSource).toLocaleDateString(locale, {
@@ -47,6 +50,7 @@ export default function Blog({ posts }: BlogProps) {
       category,
       featured,
       tags,
+      readingTime,
       image,
     };
   });
@@ -115,21 +119,28 @@ export default function Blog({ posts }: BlogProps) {
               </p>
 
               <div className="mt-auto flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-xs text-(--muted-foreground)">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>{post.date}</span>
+                <div className="flex items-center gap-3 text-xs text-(--muted-foreground)">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {post.date}
+                  </span>
+                  {post.readingTime && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {post.readingTime} min
+                    </span>
+                  )}
                 </div>
 
                 {post.slug && (
-                  <a
-                    href="#"
+                  <Link
+                    href={`/${locale}/blog/${post.slug}`}
                     className="inline-flex items-center gap-1 text-xs font-medium text-(--primary) hover:opacity-80"
                     aria-label="Read post"
                   >
                     <span>Read</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
+                  </Link>
               </div>
 
               {(post.category || post.tags.length > 0) && (

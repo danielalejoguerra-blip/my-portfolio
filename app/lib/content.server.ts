@@ -6,7 +6,7 @@ import type {
   Skill,
 } from '@/types';
 
-const API_URL = process.env.REACT_API_HOST;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchPublicList<T>(path: string, limit: number, lang?: string): Promise<T[]> {
   try {
@@ -49,4 +49,20 @@ export async function getPublicCourses(limit: number = 20, lang?: string): Promi
 export async function getPublicBlog(limit: number = 20, lang?: string): Promise<BlogPost[]> {
   const items = await fetchPublicList<BlogPost>('/blog', limit, lang);
   return items.filter((item) => item.visible && !item.deleted_at);
+}
+
+export async function getPublicBlogBySlug(slug: string, lang?: string): Promise<BlogPost | null> {
+  try {
+    if (!API_URL) return null;
+    const langParam = lang ? `?lang=${encodeURIComponent(lang)}` : '';
+    const response = await fetch(`${API_URL}/blog/${encodeURIComponent(slug)}${langParam}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
