@@ -9,6 +9,11 @@ import { PageHeader } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
@@ -564,11 +569,45 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
                     </ToggleButton>
                   </ToggleButtonGroup>
                   {publishStatus === 'scheduled' && (
-                    <TextField fullWidth label={t('form.publishedAt')} type="datetime-local"
-                      value={formData.published_at ? formData.published_at.slice(0, 16) : ''}
-                      onChange={(e) => handleFieldChange('published_at', e.target.value ? new Date(e.target.value).toISOString() : null)}
-                      size="small" slotProps={{ inputLabel: { shrink: true } }}
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DateTimePicker
+                        label={t('form.publishedAt')}
+                        value={formData.published_at ? dayjs(formData.published_at) : null}
+                        onChange={(newValue) =>
+                          handleFieldChange('published_at', newValue ? newValue.toISOString() : null)
+                        }
+                        disablePast
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                          popper: {
+                            sx: {
+                              '& .MuiPaper-root': {
+                                borderRadius: 3,
+                                boxShadow: 'var(--shadow-elevated)',
+                                border: '1px solid var(--glass-border)',
+                                background: 'var(--glass-bg)',
+                                backdropFilter: 'blur(20px)',
+                              },
+                            },
+                          },
+                          day: {
+                            sx: {
+                              borderRadius: 2,
+                              '&.Mui-selected': {
+                                background: 'var(--gradient-accent)',
+                                boxShadow: '0 2px 8px rgba(99,102,241,0.4)',
+                              },
+                              '&.MuiPickersDay-today:not(.Mui-selected)': {
+                                borderColor: 'primary.main',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
                   )}
                   <Typography variant="caption" color="text.secondary">{t('form.publishHint')}</Typography>
                 </Stack>
