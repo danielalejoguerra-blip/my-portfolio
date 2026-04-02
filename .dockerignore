@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+LICENSE
+.env*
+.vscode
+.idea
+nginx/certs
+deploy.sh
+docker-compose.yml
+Dockerfile
+.dockerignore

@@ -10,6 +10,7 @@
 # Uso:
 #   bash deploy.sh              → primer despliegue o actualización
 #   bash deploy.sh --no-build   → solo reiniciar contenedor sin rebuild
+#   bash deploy.sh --force-build → rebuild sin caché Docker (lento)
 # =============================================================================
 set -euo pipefail
 
@@ -28,11 +29,13 @@ NGINX_SITE="/etc/nginx/sites-available/${DOMAIN}"
 NGINX_ENABLED="/etc/nginx/sites-enabled/${DOMAIN}"
 CERT_PATH="/etc/letsencrypt/live/${DOMAIN}"
 NO_BUILD=false
+FORCE_BUILD=false
 
 # ─── Flags ────────────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --no-build) NO_BUILD=true; shift ;;
+    --no-build)    NO_BUILD=true; shift ;;
+    --force-build) FORCE_BUILD=true; shift ;;
     *) error "Flag desconocido: $1" ;;
   esac
 done
@@ -237,7 +240,12 @@ section "Desplegando contenedor Docker"
 
 if [[ "$NO_BUILD" == false ]]; then
   info "Construyendo imagen (esto puede tardar unos minutos)..."
-  docker compose build --no-cache
+  if [[ "$FORCE_BUILD" == true ]]; then
+    warn "Modo --force-build: sin caché Docker"
+    docker compose build --no-cache
+  else
+    docker compose build
+  fi
 fi
 
 info "Levantando contenedor..."
@@ -285,4 +293,5 @@ echo "    Logs en vivo:  docker compose logs -f frontend"
 echo "    Reiniciar:     docker compose restart frontend"
 echo "    Actualizar:    bash $APP_DIR/deploy.sh"
 echo "    Solo restart:  bash $APP_DIR/deploy.sh --no-build"
+echo "    Sin caché:     bash $APP_DIR/deploy.sh --force-build"
 echo ""

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import { projectService } from '@/services';
 import type { Project, ProjectCreate, ProjectUpdate } from '@/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { PageHeader, DynamicList } from '@/app/dashboard/_components';
+import { PageHeader, DynamicList, StyledDatePicker, UrlField } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
@@ -601,11 +601,13 @@ function FormDrawer({
   t: ReturnType<typeof useTranslations<'dashboard.projects'>>;
 }) {
   const accordionSx = {
-    background: 'transparent', boxShadow: 'none',
+    bgcolor: 'transparent', boxShadow: 'none',
     '&::before': { display: 'none' },
     border: '1px solid var(--glass-border)', borderRadius: '12px !important',
     mb: 1.5, overflow: 'hidden',
   };
+
+  const accordionSummarySx = { px: 2, minHeight: 48, '& .MuiAccordionSummary-content': { my: 0.5 } };
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}
@@ -652,8 +654,8 @@ function FormDrawer({
         {formError && <Alert severity="error" sx={{ borderRadius: '12px', mb: 2 }}>{formError}</Alert>}
 
         {/* Basic Info */}
-        <Accordion defaultExpanded sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion defaultExpanded disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <FolderRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.basicInfo')}</Typography>
@@ -667,13 +669,13 @@ function FormDrawer({
                 <TextField fullWidth label={t('form.status')} select value={formData.status || 'completed'}
                   onChange={(e) => onFieldChange('status', e.target.value)} size="small">
                   {(['completed','in_progress','maintained','archived'] as const).map((v) => (
-                    <MenuItem key={v} value={v}>{v.replace(/_/g, ' ')}</MenuItem>
+                    <MenuItem key={v} value={v} sx={{ textTransform: 'capitalize' }}>{v.replace(/_/g, ' ')}</MenuItem>
                   ))}
                 </TextField>
                 <TextField fullWidth label={t('form.category')} select value={formData.category || 'web'}
                   onChange={(e) => onFieldChange('category', e.target.value)} size="small">
                   {(['web','mobile','api','cli','data','devops','game','other'] as const).map((v) => (
-                    <MenuItem key={v} value={v}>{v}</MenuItem>
+                    <MenuItem key={v} value={v} sx={{ textTransform: 'capitalize' }}>{v}</MenuItem>
                   ))}
                 </TextField>
               </Stack>
@@ -689,8 +691,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Project Details */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <TuneRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.projectDetails')}</Typography>
@@ -699,12 +701,8 @@ function FormDrawer({
           <AccordionDetails sx={{ pt: 0, pb: 2 }}>
             <Stack spacing={2}>
               <Stack direction="row" spacing={1.5}>
-                <TextField fullWidth label={t('form.startDate')} type="date" value={formData.start_date || ''}
-                  onChange={(e) => onFieldChange('start_date', e.target.value)} size="small"
-                  slotProps={{ inputLabel: { shrink: true } }} />
-                <TextField fullWidth label={t('form.endDate')} type="date" value={formData.end_date || ''}
-                  onChange={(e) => onFieldChange('end_date', e.target.value)} size="small"
-                  slotProps={{ inputLabel: { shrink: true } }} />
+                <StyledDatePicker label={t('form.startDate')} value={formData.start_date || null} onChange={(v) => onFieldChange('start_date', v || '')} />
+                <StyledDatePicker label={t('form.endDate')} value={formData.end_date || null} onChange={(v) => onFieldChange('end_date', v || '')} />
               </Stack>
               <Stack direction="row" spacing={1.5}>
                 <TextField fullWidth label={t('form.teamSize')} type="number" value={formData.team_size ?? ''}
@@ -721,8 +719,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Links */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <LanguageRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.links')}</Typography>
@@ -730,21 +728,17 @@ function FormDrawer({
           </AccordionSummary>
           <AccordionDetails sx={{ pt: 0, pb: 2 }}>
             <Stack spacing={2}>
-              <TextField fullWidth label={t('form.projectUrl')} value={formData.project_url || ''}
-                onChange={(e) => onFieldChange('project_url', e.target.value)} size="small" placeholder="https://" />
-              <TextField fullWidth label={t('form.repositoryUrl')} value={formData.repository_url || ''}
-                onChange={(e) => onFieldChange('repository_url', e.target.value)} size="small" placeholder="https://github.com/" />
-              <TextField fullWidth label={t('form.documentationUrl')} value={formData.documentation_url || ''}
-                onChange={(e) => onFieldChange('documentation_url', e.target.value)} size="small" placeholder="https://" />
-              <TextField fullWidth label={t('form.caseStudyUrl')} value={formData.case_study_url || ''}
-                onChange={(e) => onFieldChange('case_study_url', e.target.value)} size="small" placeholder="https://" />
+              <UrlField label={t('form.projectUrl')} value={formData.project_url || ''} onChange={(v) => onFieldChange('project_url', v)} />
+              <UrlField label={t('form.repositoryUrl')} value={formData.repository_url || ''} onChange={(v) => onFieldChange('repository_url', v)} placeholder="https://github.com/" />
+              <UrlField label={t('form.documentationUrl')} value={formData.documentation_url || ''} onChange={(v) => onFieldChange('documentation_url', v)} />
+              <UrlField label={t('form.caseStudyUrl')} value={formData.case_study_url || ''} onChange={(v) => onFieldChange('case_study_url', v)} />
             </Stack>
           </AccordionDetails>
         </Accordion>
 
         {/* Tech Stack */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <DataObjectRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.techStack')}</Typography>
@@ -769,8 +763,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Content */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <ArticleRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.content')}</Typography>
@@ -785,8 +779,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Images */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <BrushRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.images')}</Typography>
@@ -838,8 +832,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Metadata */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <DataObjectRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.metadata')}</Typography>
@@ -892,8 +886,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Settings */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <TuneRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.settings')}</Typography>

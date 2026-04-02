@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks';
 import { blogService } from '@/services';
 import type { BlogPost, BlogPostCreate, BlogPostUpdate } from '@/types';
-import { PageHeader, TagInput } from '@/app/dashboard/_components';
+import { PageHeader, TagInput, UrlField } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
@@ -723,8 +723,8 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
                   </Stack>
                   <TextField fullWidth label={t('form.readingTime')} type="number" value={formData.reading_time_minutes ?? ''}
                     onChange={(e) => handleFieldChange('reading_time_minutes', e.target.value ? Number(e.target.value) : null)} size="small" />
-                  <TextField fullWidth label={t('form.coverImageUrl')} value={formData.cover_image_url || ''}
-                    onChange={(e) => handleFieldChange('cover_image_url', e.target.value)} size="small" placeholder="https://" />
+                  <UrlField label={t('form.coverImageUrl')} value={formData.cover_image_url || ''}
+                    onChange={(v) => handleFieldChange('cover_image_url', v)} />
                 </Stack>
               </AccordionDetails>
             </Accordion>

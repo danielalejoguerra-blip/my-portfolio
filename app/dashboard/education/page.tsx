@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import { educationService } from '@/services';
 import type { Education, EducationCreate, EducationUpdate } from '@/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { PageHeader, TagInput, DynamicList } from '@/app/dashboard/_components';
+import { PageHeader, TagInput, DynamicList, StyledDatePicker, UrlField } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
@@ -587,11 +587,13 @@ function FormDrawer({
   t: ReturnType<typeof useTranslations<'dashboard.education'>>;
 }) {
   const accordionSx = {
-    background: 'transparent', boxShadow: 'none',
+    bgcolor: 'transparent', boxShadow: 'none',
     '&::before': { display: 'none' },
     border: '1px solid var(--glass-border)', borderRadius: '12px !important',
     mb: 1.5, overflow: 'hidden',
   };
+
+  const accordionSummarySx = { px: 2, minHeight: 48, '& .MuiAccordionSummary-content': { my: 0.5 } };
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}
@@ -638,8 +640,8 @@ function FormDrawer({
         {formError && <Alert severity="error" sx={{ borderRadius: '12px', mb: 2 }}>{formError}</Alert>}
 
         {/* Basic Info */}
-        <Accordion defaultExpanded sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion defaultExpanded disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <SchoolRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.basicInfo')}</Typography>
@@ -654,7 +656,7 @@ function FormDrawer({
               <TextField fullWidth label={t('form.degreeType')} select value={formData.degree_type || 'other'}
                 onChange={(e) => onFieldChange('degree_type', e.target.value)} size="small">
                 {(['bachelor','master','phd','associate','bootcamp','certification','online_course','high_school','other'] as const).map((v) => (
-                  <MenuItem key={v} value={v}>{v.replace(/_/g, ' ')}</MenuItem>
+                  <MenuItem key={v} value={v} sx={{ textTransform: 'capitalize' }}>{v.replace(/_/g, ' ')}</MenuItem>
                 ))}
               </TextField>
               <TextField fullWidth label={t('form.fieldOfStudy')} value={formData.field_of_study || ''}
@@ -671,8 +673,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Dates & Credentials */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <CalendarMonthRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.datesSection')}</Typography>
@@ -681,12 +683,8 @@ function FormDrawer({
           <AccordionDetails sx={{ pt: 0, pb: 2 }}>
             <Stack spacing={2}>
               <Stack direction="row" spacing={1.5}>
-                <TextField fullWidth label={t('form.startDate')} type="date" value={formData.start_date || ''}
-                  onChange={(e) => onFieldChange('start_date', e.target.value)} size="small"
-                  slotProps={{ inputLabel: { shrink: true } }} />
-                <TextField fullWidth label={t('form.endDate')} type="date" value={formData.end_date || ''}
-                  onChange={(e) => onFieldChange('end_date', e.target.value)} size="small"
-                  slotProps={{ inputLabel: { shrink: true } }} helperText={t('form.endDateHint')} />
+                <StyledDatePicker label={t('form.startDate')} value={formData.start_date || null} onChange={(v) => onFieldChange('start_date', v || '')} />
+                <StyledDatePicker label={t('form.endDate')} value={formData.end_date || null} onChange={(v) => onFieldChange('end_date', v || '')} helperText={t('form.endDateHint')} />
               </Stack>
               <Stack direction="row" spacing={1.5}>
                 <TextField fullWidth label={t('form.grade')} value={formData.grade || ''}
@@ -696,17 +694,15 @@ function FormDrawer({
               </Stack>
               <TextField fullWidth label={t('form.credentialId')} value={formData.credential_id || ''}
                 onChange={(e) => onFieldChange('credential_id', e.target.value)} size="small" />
-              <TextField fullWidth label={t('form.credentialUrl')} value={formData.credential_url || ''}
-                onChange={(e) => onFieldChange('credential_url', e.target.value)} size="small" placeholder="https://" />
-              <TextField fullWidth label={t('form.institutionUrl')} value={formData.institution_url || ''}
-                onChange={(e) => onFieldChange('institution_url', e.target.value)} size="small" placeholder="https://" />
+              <UrlField label={t('form.credentialUrl')} value={formData.credential_url || ''} onChange={(v) => onFieldChange('credential_url', v)} />
+              <UrlField label={t('form.institutionUrl')} value={formData.institution_url || ''} onChange={(v) => onFieldChange('institution_url', v)} />
             </Stack>
           </AccordionDetails>
         </Accordion>
 
         {/* Coursework, Activities & Achievements */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <WorkspacePremiumRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.courseworkSection')}</Typography>
@@ -747,8 +743,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Content */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <ArticleRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.content')}</Typography>
@@ -763,8 +759,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Images */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <BrushRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.images')}</Typography>
@@ -816,8 +812,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Metadata */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <DataObjectRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.metadata')}</Typography>
@@ -870,8 +866,8 @@ function FormDrawer({
         </Accordion>
 
         {/* Settings */}
-        <Accordion sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+        <Accordion disableGutters elevation={0} sx={accordionSx}>
+          <AccordionSummary expandIcon={<KeyboardArrowDownRoundedIcon />} sx={accordionSummarySx}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <TuneRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
               <Typography variant="body2" fontWeight={700}>{t('form.settings')}</Typography>
