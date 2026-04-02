@@ -12,7 +12,7 @@ import {
   X,
   ExternalLink,
 } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/app/components/ui";
@@ -24,6 +24,7 @@ interface BlogDetailProps {
 
 export default function BlogDetail({ post }: BlogDetailProps) {
   const locale = useLocale();
+  const t = useTranslations("blogDetail");
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
   const metadata = (post.metadata as Record<string, unknown>) || {};
@@ -50,7 +51,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
           className="inline-flex items-center gap-2 text-sm text-(--muted-foreground) hover:text-(--primary) transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to blog
+          {t("backToBlog")}
         </Link>
       </div>
 
@@ -74,7 +75,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
             />
             {featured && (
               <div className="absolute top-4 left-4">
-                <Badge variant="primary">Featured</Badge>
+                <Badge variant="primary">{t("featured")}</Badge>
               </div>
             )}
           </motion.div>
@@ -113,7 +114,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
             {readingTime && (
               <span className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
-                {readingTime} min read
+                {readingTime} {t("minRead")}
               </span>
             )}
             {canonicalUrl && (
@@ -124,7 +125,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
                 className="flex items-center gap-1.5 hover:text-(--primary) transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                Original
+                {t("original")}
               </a>
             )}
           </div>
@@ -159,7 +160,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
           {/* Image gallery */}
           {images.length > 1 && (
             <div className="mt-10">
-              <h2 className="text-xl font-semibold mb-4">Gallery</h2>
+              <h2 className="text-xl font-semibold mb-4">{t("gallery")}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {images.map((img, index) => (
                   <motion.div

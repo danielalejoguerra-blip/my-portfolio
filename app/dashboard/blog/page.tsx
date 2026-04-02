@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks';
 import { blogService } from '@/services';
 import type { BlogPost, BlogPostCreate, BlogPostUpdate } from '@/types';
-import { PageHeader } from '@/app/dashboard/_components';
+import { PageHeader, TagInput } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
@@ -73,11 +73,14 @@ type FormData = BlogPostCreate & { id?: number };
 const emptyForm: FormData = {
   title: '',
   slug: '',
+  status: 'draft',
   description: '',
   content: '',
+  category: '',
+  tags: [],
+  featured: false,
   images: [],
   metadata: {},
-  visible: true,
   published_at: null,
 };
 
@@ -105,16 +108,18 @@ function ViewToggle({ view, onChange }: { view: 'grid' | 'table'; onChange: (v: 
 
 // ─── StatsBar ─────────────────────────────────────────────────────────────────
 function StatsBar({ items }: { items: BlogPost[] }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const published = items.filter((i) => i.published_at && new Date(i.published_at) <= new Date() && !i.deleted_at).length;
   const scheduled = items.filter((i) => i.published_at && new Date(i.published_at) > new Date() && !i.deleted_at).length;
   const draft = items.filter((i) => !i.published_at && !i.deleted_at).length;
   const deleted = items.filter((i) => i.deleted_at).length;
+  const t = useTranslations('dashboard.blog');
   const stats = [
-    { label: 'Total', value: items.length, color: '#6366f1' },
-    { label: 'Published', value: published, color: '#10b981' },
-    { label: 'Scheduled', value: scheduled, color: '#f59e0b' },
-    { label: 'Draft', value: draft, color: '#6b7280' },
-    { label: 'Deleted', value: deleted, color: '#ef4444' },
+    { label: t('stats.total'), value: items.length, color: '#6366f1' },
+    { label: t('stats.published'), value: published, color: '#10b981' },
+    { label: t('stats.scheduled'), value: scheduled, color: '#f59e0b' },
+    { label: t('stats.draft'), value: draft, color: '#6b7280' },
+    { label: t('stats.deleted'), value: deleted, color: '#ef4444' },
   ];
   return (
     <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
@@ -169,9 +174,8 @@ function BlogCard({ item, onEdit, onDelete, onHardDelete, onRestore, t }: {
   onRestore: (id: number) => void;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const meta = (item.metadata || {}) as Record<string, unknown>;
-  const tags = Array.isArray(meta.tags) ? (meta.tags as string[]) : [];
-  const category = typeof meta.category === 'string' ? meta.category : null;
+  const tags = item.tags || [];
+  const category = item.category || null;
 
   const getPostStatus = (): { label: string; color: string } => {
     if (!item.published_at) return { label: t('statusDraft'), color: '#6b7280' };
@@ -211,13 +215,6 @@ function BlogCard({ item, onEdit, onDelete, onHardDelete, onRestore, t }: {
           fontWeight: 600, fontSize: '0.68rem', backdropFilter: 'blur(12px)',
           bgcolor: alpha(status.color, 0.85), color: '#fff',
         }} />
-        {!item.visible && (
-          <Chip icon={<VisibilityOffRoundedIcon />} label={t('hidden')} size="small" sx={{
-            fontWeight: 600, fontSize: '0.68rem', backdropFilter: 'blur(12px)',
-            bgcolor: (th) => alpha(th.palette.text.primary, 0.6), color: '#fff',
-            '& .MuiChip-icon': { color: '#fff' },
-          }} />
-        )}
         {item.deleted_at && (
           <Chip label={t('deleted')} size="small" sx={{
             fontWeight: 600, fontSize: '0.68rem',
@@ -333,21 +330,20 @@ function BlogTable({ items, onEdit, onDelete, onHardDelete, onRestore, t }: {
       <Table size="small">
         <TableHead>
           <TableRow sx={{ '& th': { fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', py: 1.5, bgcolor: (th) => alpha(th.palette.text.primary, 0.03) } }}>
-            <TableCell>Post</TableCell>
-            <TableCell>Slug</TableCell>
-            <TableCell>Category</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Published</TableCell>
-            <TableCell>Images</TableCell>
-            <TableCell>Visibility</TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell>{t('table.post')}</TableCell>
+            <TableCell>{t('table.slug')}</TableCell>
+            <TableCell>{t('table.category')}</TableCell>
+            <TableCell>{t('table.status')}</TableCell>
+            <TableCell>{t('table.published')}</TableCell>
+            <TableCell>{t('table.images')}</TableCell>
+            <TableCell>{t('table.visibility')}</TableCell>
+            <TableCell align="right">{t('table.actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           <AnimatePresence>
             {items.map((item) => {
-              const meta = (item.metadata || {}) as Record<string, unknown>;
-              const category = typeof meta.category === 'string' ? meta.category : null;
+              const category = item.category || null;
               const status = getStatus(item);
               return (
                 <motion.tr
@@ -391,9 +387,13 @@ function BlogTable({ items, onEdit, onDelete, onHardDelete, onRestore, t }: {
                     <Typography variant="caption" color="text.secondary">{item.images?.length ?? 0}</Typography>
                   </TableCell>
                   <TableCell>
-                    {item.visible
-                      ? <Chip label="Visible" size="small" sx={{ fontWeight: 600, fontSize: '0.68rem', height: 22, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main' }} />
-                      : <Chip icon={<VisibilityOffRoundedIcon />} label="Hidden" size="small" sx={{ fontWeight: 600, fontSize: '0.68rem', height: 22, bgcolor: (th) => alpha(th.palette.text.primary, 0.06), color: 'text.secondary', '& .MuiChip-icon': { fontSize: 12 } }} />}
+                    <Chip
+                      label={item.status}
+                      size="small"
+                      sx={{ fontWeight: 600, fontSize: '0.68rem', height: 22,
+                        bgcolor: item.status === 'published' ? (th) => alpha(th.palette.success.main, 0.1) : (th) => alpha(th.palette.text.primary, 0.07),
+                        color: item.status === 'published' ? 'success.main' : 'text.secondary' }}
+                    />
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
@@ -702,10 +702,30 @@ function FormDrawer({ open, onClose, editingId, formData, setFormData, onSubmit,
                 </Stack>
               </AccordionSummary>
               <AccordionDetails sx={{ px: 2, pb: 2 }}>
-                <FormControlLabel
-                  control={<Switch checked={formData.visible ?? true} onChange={(e) => handleFieldChange('visible', e.target.checked)} />}
-                  label={<Typography variant="body2">{t('form.visible')}</Typography>}
-                />
+                <Stack spacing={2}>
+                  <FormControlLabel
+                    control={<Switch checked={formData.featured ?? false} onChange={(e) => handleFieldChange('featured', e.target.checked)} />}
+                    label={<Typography variant="body2">{t('form.featured')}</Typography>}
+                  />
+                  <TextField fullWidth label={t('form.category')} value={formData.category || ''}
+                    onChange={(e) => handleFieldChange('category', e.target.value)} size="small" placeholder="backend, frontend, devops…" />
+                  <TagInput
+                    value={formData.tags || []}
+                    onChange={(tags) => handleFieldChange('tags', tags)}
+                    label={t('form.tags')}
+                    placeholder={t('form.tagsPlaceholder')}
+                  />
+                  <Stack direction="row" spacing={1.5}>
+                    <TextField fullWidth label={t('form.series')} value={formData.series || ''}
+                      onChange={(e) => handleFieldChange('series', e.target.value)} size="small" />
+                    <TextField fullWidth label={t('form.seriesOrder')} type="number" value={formData.series_order ?? ''}
+                      onChange={(e) => handleFieldChange('series_order', e.target.value ? Number(e.target.value) : null)} size="small" />
+                  </Stack>
+                  <TextField fullWidth label={t('form.readingTime')} type="number" value={formData.reading_time_minutes ?? ''}
+                    onChange={(e) => handleFieldChange('reading_time_minutes', e.target.value ? Number(e.target.value) : null)} size="small" />
+                  <TextField fullWidth label={t('form.coverImageUrl')} value={formData.cover_image_url || ''}
+                    onChange={(e) => handleFieldChange('cover_image_url', e.target.value)} size="small" placeholder="https://" />
+                </Stack>
               </AccordionDetails>
             </Accordion>
           </Stack>
@@ -767,7 +787,13 @@ export default function BlogPage() {
   };
   const openEditForm = (item: BlogPost) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, slug: item.slug, description: item.description || '', content: item.content || '', images: item.images || [], metadata: item.metadata || {}, visible: item.visible, published_at: item.published_at });
+    setFormData({ title: item.title, slug: item.slug, status: item.status,
+      description: item.description || '', content: item.content || '',
+      category: item.category || '', tags: item.tags || [], featured: item.featured,
+      cover_image_url: item.cover_image_url || '', series: item.series || '',
+      series_order: item.series_order ?? undefined,
+      reading_time_minutes: item.reading_time_minutes ?? undefined,
+      images: item.images || [], metadata: item.metadata || {}, published_at: item.published_at });
     setFormError(null);
     setImageUrl(''); setMetaKey(''); setMetaValue('');
     if (!item.published_at) setPublishStatus('draft');

@@ -25,16 +25,11 @@ type BlogCard = {
 };
 
 export default function Blog({ posts }: BlogProps) {
-  const t = useTranslations("dashboard.blog");
+  const t = useTranslations("blog");
   const locale = useLocale();
 
   const fromBackend: BlogCard[] = (posts || []).map((post) => {
-    const metadata = (post.metadata || {}) as Record<string, unknown>;
-    const category = typeof metadata.category === "string" ? metadata.category : null;
-    const featured = typeof metadata.featured === "boolean" ? metadata.featured : false;
-    const tags = Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [];
-    const readingTime = typeof metadata.reading_time === "number" ? metadata.reading_time : null;
-    const image = post.images && post.images.length > 0 ? post.images[0] : null;
+    const image = post.cover_image_url || (post.images && post.images.length > 0 ? post.images[0] : null);
     const dateSource = post.published_at || post.created_at;
     const date = new Date(dateSource).toLocaleDateString(locale, {
       year: "numeric",
@@ -47,10 +42,10 @@ export default function Blog({ posts }: BlogProps) {
       description: post.description || "",
       date,
       slug: post.slug,
-      category,
-      featured,
-      tags,
-      readingTime,
+      category: post.category || null,
+      featured: post.featured ?? false,
+      tags: post.tags || [],
+      readingTime: post.reading_time_minutes || null,
       image,
     };
   });
@@ -64,6 +59,7 @@ export default function Blog({ posts }: BlogProps) {
       category: null,
       featured: false,
       tags: [],
+      readingTime: null,
       image: null,
     },
   ];
@@ -99,7 +95,7 @@ export default function Blog({ posts }: BlogProps) {
                 )}
                 {post.featured && (
                   <div className="absolute top-3 right-3">
-                    <Badge variant="primary">Featured</Badge>
+                    <Badge variant="primary">{t("featured")}</Badge>
                   </div>
                 )}
               </div>
@@ -127,7 +123,7 @@ export default function Blog({ posts }: BlogProps) {
                   {post.readingTime && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
-                      {post.readingTime} min
+                      {post.readingTime} {t("readingTimeMin")}
                     </span>
                   )}
                 </div>
@@ -136,11 +132,12 @@ export default function Blog({ posts }: BlogProps) {
                   <Link
                     href={`/${locale}/blog/${post.slug}`}
                     className="inline-flex items-center gap-1 text-xs font-medium text-(--primary) hover:opacity-80"
-                    aria-label="Read post"
+                    aria-label={t("readPost")}
                   >
-                    <span>Read</span>
+                    <span>{t("read")}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
+                )}
               </div>
 
               {(post.category || post.tags.length > 0) && (

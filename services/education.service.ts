@@ -61,7 +61,7 @@ export const educationService = {
    * Actualiza una entrada de educación existente
    */
   async update(id: number, data: EducationUpdate): Promise<Education> {
-    const response = await api.put<Education>(`/education/admin/${id}`, data);
+    const response = await api.put<Education>(`/education/${id}`, data);
     return response.data;
   },
 
@@ -69,14 +69,14 @@ export const educationService = {
    * Elimina una entrada de educación (soft delete por defecto)
    */
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/education/admin/${id}`, { params: { hard } });
+    await api.delete(`/education/${id}`, { params: { hard } });
   },
 
   /**
    * Restaura una entrada de educación soft-deleted
    */
   async restore(id: number): Promise<Education> {
-    const response = await api.post<Education>(`/education/admin/${id}/restore`);
+    const response = await api.post<Education>(`/education/${id}/restore`);
     return response.data;
   },
 };

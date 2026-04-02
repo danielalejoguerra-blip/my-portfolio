@@ -61,7 +61,7 @@ export const experienceService = {
    * Actualiza una experiencia existente
    */
   async update(id: number, data: ExperienceUpdate): Promise<Experience> {
-    const response = await api.put<Experience>(`/experience/admin/${id}`, data);
+    const response = await api.put<Experience>(`/experience/${id}`, data);
     return response.data;
   },
 
@@ -69,14 +69,14 @@ export const experienceService = {
    * Elimina una experiencia (soft delete por defecto)
    */
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/experience/admin/${id}`, { params: { hard } });
+    await api.delete(`/experience/${id}`, { params: { hard } });
   },
 
   /**
    * Restaura una experiencia soft-deleted
    */
   async restore(id: number): Promise<Experience> {
-    const response = await api.post<Experience>(`/experience/admin/${id}/restore`);
+    const response = await api.post<Experience>(`/experience/${id}/restore`);
     return response.data;
   },
 };

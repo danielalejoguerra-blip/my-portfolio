@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Award, BookOpen, ExternalLink, X, Clock, Calendar, Tag, User, Github } from "lucide-react";
+import { Award, BookOpen, ExternalLink, X, Clock, Calendar, Tag, User, Github, BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Section, Card, Badge } from "@/app/components/ui";
@@ -17,12 +17,21 @@ type CourseCard = {
   name: string;
   description: string;
   platform: string;
+  platformUrl: string | null;
   instructor: string | null;
+  instructorUrl: string | null;
   completionDate: string | null;
+  expirationDate: string | null;
   durationHours: number | null;
+  isExpired: boolean;
+  isCertification: boolean;
+  level: string | null;
   skills: string[];
   category: string | null;
   certificateUrl: string | null;
+  badgeUrl: string | null;
+  credentialId: string | null;
+  syllabus: { title: string; topics?: string[]; duration_minutes?: number | null }[];
   htmlContent: string;
   image: string | null;
 };
@@ -36,6 +45,15 @@ function LinkIcon({ url }: { url: string }) {
   return <ExternalLink className="w-3.5 h-3.5" />;
 }
 
+const LEVEL_KEYS: Record<string, string> = {
+  beginner: "beginner", intermediate: "intermediate", advanced: "advanced", expert: "expert",
+};
+const CATEGORY_KEYS: Record<string, string> = {
+  backend: "backend", frontend: "frontend", mobile: "mobile", devops: "devops",
+  data: "data", design: "design", security: "security", cloud: "cloud",
+  soft_skills: "soft_skills", other: "other",
+};
+
 export default function Certifications({ courses: backendCourses }: CertificationsProps) {
   const t = useTranslations("certifications");
   const [selected, setSelected] = useState<CourseCard | null>(null);
@@ -47,29 +65,29 @@ export default function Certifications({ courses: backendCourses }: Certificatio
   ];
 
   const fromBackend: CourseCard[] = (backendCourses || []).map((course) => {
-    const meta = (course.metadata || {}) as Record<string, unknown>;
-    const platform = typeof meta.platform === "string" ? meta.platform : "Course";
-    const instructor = typeof meta.instructor === "string" ? meta.instructor : null;
-    const completionDate = typeof meta.completion_date === "string" ? meta.completion_date : null;
-    const durationHours = typeof meta.duration_hours === "number" ? meta.duration_hours : null;
-    const skills = Array.isArray(meta.skills) ? (meta.skills as string[]) : [];
-    const category = typeof meta.category === "string" ? meta.category : null;
-    const certificateUrl = typeof meta.certificate_url === "string" ? meta.certificate_url : null;
     const image = course.images && course.images.length > 0 ? course.images[0] : null;
-
     return {
       id: course.id,
       name: course.title,
       description: course.description || "",
-      platform,
-      instructor,
-      completionDate,
-      durationHours,
-      skills,
-      category,
-      certificateUrl,
+      platform: course.platform || "Course",
+      platformUrl: course.platform_url || null,
+      instructor: course.instructor || null,
+      instructorUrl: course.instructor_url || null,
+      completionDate: course.completion_date || null,
+      expirationDate: course.expiration_date || null,
+      durationHours: course.duration_hours || null,
+      isExpired: !!course.is_expired,
+      isCertification: !!course.is_certification,
+      level: course.level || null,
+      skills: (course.skills_gained || []).map((s) => s.name),
+      category: course.category || null,
+      certificateUrl: course.certificate_url || null,
+      badgeUrl: course.badge_url || null,
+      credentialId: course.credential_id || null,
+      syllabus: course.syllabus || [],
       htmlContent: course.content || "",
-      image,
+      image: course.certificate_image_url || image,
     };
   });
 
@@ -89,18 +107,30 @@ export default function Certifications({ courses: backendCourses }: Certificatio
               >
                 <Card className="h-full flex flex-col group overflow-hidden cursor-pointer" whileHover={{ y: -5 }}>
                   <div className="relative h-44 -mx-6 -mt-6 mb-4 bg-linear-to-br from-(--gradient-start)/20 via-(--gradient-mid)/20 to-(--gradient-end)/20 rounded-t-xl overflow-hidden">
-                    {course.image ? (
+                    {course.badgeUrl ? (
+                      <div className="absolute inset-0 flex items-center justify-center p-6">
+                        <Image src={course.badgeUrl} alt={course.name} width={120} height={120} className="object-contain drop-shadow-lg" />
+                      </div>
+                    ) : course.image ? (
                       <Image src={course.image} alt={course.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <BookOpen className="w-14 h-14 text-(--primary)/30 group-hover:text-(--primary)/60 transition-colors" />
                       </div>
                     )}
-                    {course.category && (
-                      <div className="absolute top-3 left-3">
-                        <Badge variant="primary">{course.category}</Badge>
-                      </div>
-                    )}
+                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                      {course.isCertification && (
+                        <Badge variant="primary">
+                          <BadgeCheck className="w-3 h-3 mr-1" />{t("certified")}
+                        </Badge>
+                      )}
+                      {course.level && (
+                        <Badge variant="secondary">{t(`level.${LEVEL_KEYS[course.level] ?? course.level}`)}</Badge>
+                      )}
+                      {!course.isCertification && course.category && (
+                        <Badge variant="outline">{t(`category.${CATEGORY_KEYS[course.category] ?? course.category}`)}</Badge>
+                      )}
+                    </div>
                     {course.certificateUrl && (
                       <a
                         href={course.certificateUrl}
@@ -112,6 +142,9 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                       >
                         <LinkIcon url={course.certificateUrl} />
                       </a>
+                    )}
+                    {course.isExpired && (
+                      <div className="absolute bottom-0 inset-x-0 bg-orange-500/90 text-white text-center text-xs py-1 font-medium">{t("expired")}</div>
                     )}
                   </div>
 
@@ -127,11 +160,15 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                     )}
 
                     <div className="flex flex-wrap gap-1.5 mt-auto">
-                      <Badge variant="secondary">
-                        <Award className="w-3 h-3 mr-1" />
-                        {course.platform}
-                      </Badge>
-                      {course.completionDate && <Badge variant="outline">{course.completionDate}</Badge>}
+                      {course.platformUrl
+                        ? <a href={course.platformUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                            <Badge variant="secondary" className="hover:opacity-80 transition-opacity cursor-pointer">
+                              <Award className="w-3 h-3 mr-1" />{course.platform} <ExternalLink className="w-2.5 h-2.5 ml-1" />
+                            </Badge>
+                          </a>
+                        : <Badge variant="secondary"><Award className="w-3 h-3 mr-1" />{course.platform}</Badge>
+                      }
+                      {course.completionDate && <Badge variant="outline"><Calendar className="w-3 h-3 mr-1" />{course.completionDate}</Badge>}
                       {course.instructor && (
                         <Badge variant="outline">
                           <User className="w-3 h-3 mr-1" />
@@ -144,7 +181,7 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                           {course.durationHours}h
                         </Badge>
                       )}
-                      {course.skills.slice(0, 3).map((s) => (
+                      {course.skills.slice(0, 4).map((s) => (
                         <Badge key={s} variant="outline">
                           <Tag className="w-3 h-3 mr-1" />
                           {s}
@@ -190,7 +227,12 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
                       <h2 className="text-xl font-bold text-(--foreground)">{selected.name}</h2>
-                      <p className="text-(--primary) font-medium mt-0.5">{selected.platform}</p>
+                      {selected.platformUrl
+                        ? <a href={selected.platformUrl} target="_blank" rel="noopener noreferrer" className="text-(--primary) font-medium mt-0.5 inline-flex items-center gap-1 hover:underline">
+                            {selected.platform} <ExternalLink className="w-3 h-3" />
+                          </a>
+                        : <p className="text-(--primary) font-medium mt-0.5">{selected.platform}</p>
+                      }
                     </div>
                     <button
                       onClick={() => setSelected(null)}
@@ -201,10 +243,24 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                     </button>
                   </div>
 
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {selected.isCertification && (
+                      <Badge variant="primary"><BadgeCheck className="w-3 h-3 mr-1" />{t("certification")}</Badge>
+                    )}
+                    {selected.level && <Badge variant="secondary">{t(`level.${LEVEL_KEYS[selected.level] ?? selected.level}`)}</Badge>}
+                    {selected.category && <Badge variant="outline">{t(`category.${CATEGORY_KEYS[selected.category] ?? selected.category}`)}</Badge>}
+                    {selected.isExpired && <Badge variant="outline" className="text-orange-500 border-orange-500">{t("expired")}</Badge>}
+                  </div>
+
                   <div className="flex flex-wrap gap-3 text-sm text-(--muted-foreground) mb-4">
                     {selected.completionDate && (
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4" /> {selected.completionDate}
+                      </span>
+                    )}
+                    {selected.expirationDate && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" /> {t("expires", { date: selected.expirationDate })}
                       </span>
                     )}
                     {selected.durationHours && (
@@ -213,26 +269,49 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                       </span>
                     )}
                     {selected.instructor && (
+                      selected.instructorUrl
+                        ? <a href={selected.instructorUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-(--primary) transition-colors">
+                            <User className="w-4 h-4" /> {selected.instructor} <ExternalLink className="w-3 h-3" />
+                          </a>
+                        : <span className="flex items-center gap-1.5">
+                            <User className="w-4 h-4" /> {selected.instructor}
+                          </span>
+                    )}
+                    {selected.credentialId && (
                       <span className="flex items-center gap-1.5">
-                        <User className="w-4 h-4" /> {selected.instructor}
+                        <Tag className="w-4 h-4" /> {t("credentialId", { id: selected.credentialId })}
                       </span>
                     )}
                   </div>
 
-                  {selected.category && (
-                    <div className="mb-4">
-                      <Badge variant="primary">{selected.category}</Badge>
-                    </div>
-                  )}
-
                   {selected.skills.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs font-semibold text-(--muted-foreground) uppercase tracking-wide mb-2">Skills</p>
+                      <p className="text-xs font-semibold text-(--muted-foreground) uppercase tracking-wide mb-2">{t("skills")}</p>
                       <div className="flex flex-wrap gap-2">
                         {selected.skills.map((s) => (
                           <Badge key={s} variant="outline">
                             <Tag className="w-3 h-3 mr-1" /> {s}
                           </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selected.syllabus.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-(--muted-foreground) uppercase tracking-wide mb-2">{t("syllabus")}</p>
+                      <div className="space-y-1.5">
+                        {selected.syllabus.map((item, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-(--primary)/10 text-(--primary) flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                            <div className="min-w-0">
+                              <span className="font-medium text-(--foreground)">{item.title}</span>
+                              {item.duration_minutes && <span className="ml-2 text-(--muted-foreground)">({Math.round(item.duration_minutes / 60 * 10) / 10}h)</span>}
+                              {item.topics && item.topics.length > 0 && (
+                                <p className="text-(--muted-foreground) mt-0.5">{item.topics.join(" · ")}</p>
+                              )}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -260,7 +339,7 @@ export default function Certifications({ courses: backendCourses }: Certificatio
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-(--primary) text-white text-sm hover:opacity-90 transition-opacity w-full justify-center"
                     >
                       <LinkIcon url={selected.certificateUrl} />
-                      {isGithubUrl(selected.certificateUrl) ? "View on GitHub" : "View Certificate"}
+                      {isGithubUrl(selected.certificateUrl) ? t("viewOnGithub") : t("viewCertificate")}
                     </a>
                   )}
                 </div>

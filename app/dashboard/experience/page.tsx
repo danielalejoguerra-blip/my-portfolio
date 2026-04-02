@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import { experienceService } from '@/services';
 import type { Experience, ExperienceCreate, ExperienceUpdate } from '@/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { PageHeader } from '@/app/dashboard/_components';
+import { PageHeader, TagInput, DynamicList } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
@@ -62,6 +62,8 @@ import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
 import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
+import MenuItem from '@mui/material/MenuItem';
+import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
 
 /* ─── Types ─── */
 type ViewMode = 'cards' | 'table';
@@ -69,6 +71,10 @@ type FormData = ExperienceCreate & { id?: number };
 
 const emptyForm: FormData = {
   title: '', slug: '', description: '', content: '',
+  company: '', company_url: '', company_logo_url: '', location: '', department: '',
+  employment_type: 'full_time', work_mode: 'hybrid',
+  start_date: '', end_date: undefined, is_current: false,
+  tech_stack: [], responsibilities: [], achievements: [], related_projects: [], references: [],
   images: [], metadata: {}, visible: true, order: 0,
 };
 
@@ -79,6 +85,7 @@ const generateSlug = (title: string) =>
    SUB-COMPONENT: View Toggle
 ══════════════════════════════════════════ */
 function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
+  const t = useTranslations('dashboard.experience');
   return (
     <Box sx={{
       display: 'flex', borderRadius: '12px', overflow: 'hidden',
@@ -89,7 +96,7 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
       {(['cards', 'table'] as ViewMode[]).map((mode) => {
         const active = value === mode;
         return (
-          <Tooltip key={mode} title={mode === 'cards' ? 'Card view' : 'Table view'}>
+          <Tooltip key={mode} title={mode === 'cards' ? t('cardView') : t('tableView')}>
             <Box
               component="button"
               onClick={() => onChange(mode)}
@@ -117,16 +124,17 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
    SUB-COMPONENT: Stats Bar
 ══════════════════════════════════════════ */
 function StatsBar({ items }: { items: Experience[] }) {
+  const t = useTranslations('dashboard.experience');
   const total   = items.length;
   const visible = items.filter((i) => i.visible && !i.deleted_at).length;
   const hidden  = items.filter((i) => !i.visible && !i.deleted_at).length;
   const deleted = items.filter((i) => !!i.deleted_at).length;
 
   const stats = [
-    { label: 'Total',   value: total,   color: '#6366f1' },
-    { label: 'Visible', value: visible, color: '#22c55e' },
-    { label: 'Hidden',  value: hidden,  color: '#f59e0b' },
-    { label: 'Deleted', value: deleted, color: '#ef4444' },
+    { label: t('stats.total'),   value: total,   color: '#6366f1' },
+    { label: t('stats.visible'), value: visible, color: '#22c55e' },
+    { label: t('stats.hidden'),  value: hidden,  color: '#f59e0b' },
+    { label: t('stats.deleted'), value: deleted, color: '#ef4444' },
   ];
 
   return (
@@ -158,11 +166,12 @@ function StatsBar({ items }: { items: Experience[] }) {
    SUB-COMPONENT: Inline Confirm
 ══════════════════════════════════════════ */
 function InlineConfirmButton({
-  onConfirm, label, confirmLabel = 'Confirm', color = 'error', icon, size = 'small',
+  onConfirm, label, confirmLabel, color = 'error', icon, size = 'small',
 }: {
   onConfirm: () => void; label: string; confirmLabel?: string;
   color?: 'error' | 'warning'; icon?: React.ReactNode; size?: 'small' | 'medium';
 }) {
+  const t = useTranslations('dashboard.experience');
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -188,7 +197,7 @@ function InlineConfirmButton({
             startIcon={<CheckRoundedIcon sx={{ fontSize: 14 }} />}
             onClick={doConfirm}
             sx={{ fontWeight: 700, borderRadius: '8px', fontSize: '0.72rem' }}>
-            {confirmLabel}
+            {confirmLabel ?? t('confirm')}
           </Button>
           <IconButton size="small"
             onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); setConfirming(false); }}
@@ -228,11 +237,10 @@ function ExperienceCard({
   t: ReturnType<typeof useTranslations<'dashboard.experience'>>;
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
-  const meta = (item.metadata || {}) as Record<string, unknown>;
-  const techs = Array.isArray(meta.technologies) ? (meta.technologies as string[]) : [];
-  const company = typeof meta.company === 'string' ? meta.company : '';
-  const startDate = typeof meta.start_date === 'string' ? meta.start_date : '';
-  const endDate = typeof meta.end_date === 'string' ? meta.end_date : '';
+  const techs = (item.tech_stack || []).map((t) => t.name);
+  const company = item.company || '';
+  const startDate = item.start_date || '';
+  const endDate = item.end_date || '';
   const descLong = (item.description?.length ?? 0) > 130;
 
   return (
@@ -368,7 +376,7 @@ function ExperienceCard({
                   endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 15, transition: 'transform 0.25s', transform: descExpanded ? 'rotate(180deg)' : 'none' }} />}
                   onClick={() => setDescExpanded((v) => !v)}
                   sx={{ mt: 0.25, color: 'primary.main', fontWeight: 600, fontSize: '0.7rem', p: 0, minWidth: 0, '&:hover': { background: 'none' } }}>
-                  {descExpanded ? 'Show less' : 'Show more'}
+                  {descExpanded ? t('showLess') : t('showMore')}
                 </Button>
               )}
             </Box>
@@ -408,7 +416,7 @@ function ExperienceCard({
               </Button>
               <InlineConfirmButton
                 onConfirm={() => onHardDelete(item.id)}
-                label={t('hardDelete')} confirmLabel="Delete forever"
+                label={t('hardDelete')} confirmLabel={t('deleteForever')}
                 color="error" icon={<DeleteForeverRoundedIcon sx={{ fontSize: 14 }} />}
               />
             </>
@@ -446,7 +454,7 @@ function ExperienceTable({
   onRestore: (id: number) => void;
   t: ReturnType<typeof useTranslations<'dashboard.experience'>>;
 }) {
-  const cols = ['Experience', 'Slug', 'Description', 'Company', 'Period', 'Tech', 'Status', 'Actions'];
+  const cols = [t('table.experience'), t('table.slug'), t('table.description'), t('table.company'), t('table.period'), t('table.tech'), t('table.status'), t('table.actions')];
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
       <Paper elevation={0} sx={{
@@ -471,11 +479,10 @@ function ExperienceTable({
             <TableBody>
               <AnimatePresence>
                 {items.map((item, index) => {
-                  const meta = (item.metadata || {}) as Record<string, unknown>;
-                  const techs = Array.isArray(meta.technologies) ? (meta.technologies as string[]) : [];
-                  const company = typeof meta.company === 'string' ? meta.company : '';
-                  const startDate = typeof meta.start_date === 'string' ? meta.start_date : '';
-                  const endDate = typeof meta.end_date === 'string' ? meta.end_date : '';
+                  const techs = (item.tech_stack || []).map((t) => t.name);
+                  const company = item.company || '';
+                  const startDate = item.start_date || '';
+                  const endDate = item.end_date || '';
                   return (
                     <motion.tr key={item.id}
                       initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
@@ -534,11 +541,11 @@ function ExperienceTable({
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)' }}>
                         {item.deleted_at ? (
-                          <Chip label="Deleted" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
+                          <Chip label={t('deleted')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
                         ) : item.visible ? (
-                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Visible" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
+                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('visible')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
                         ) : (
-                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Hidden" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
+                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('hidden')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
                         )}
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)', whiteSpace: 'nowrap' }}>
@@ -582,7 +589,7 @@ function FormDrawer({
   imageUrl: string; metaKey: string; metaValue: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onFieldChange: (field: keyof FormData, value: string | boolean | number | string[]) => void;
+  onFieldChange: (field: keyof FormData, value: unknown) => void;
   onTitleChange: (v: string) => void;
   onImageUrlChange: (v: string) => void;
   onAddImage: () => void;
@@ -631,7 +638,7 @@ function FormDrawer({
               {editingId ? t('editTitle') : t('createTitle')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {editingId ? `Editing #${editingId}` : 'Fill in the experience details'}
+              {editingId ? t('editingSubtitle', { id: String(editingId) }) : t('createSubtitle')}
             </Typography>
           </Box>
         </Stack>
@@ -660,10 +667,100 @@ function FormDrawer({
                 onChange={(e) => onTitleChange(e.target.value)} required size="small" />
               <TextField fullWidth label={t('form.slug')} value={formData.slug}
                 onChange={(e) => onFieldChange('slug', e.target.value)} required size="small"
-                helperText="Auto-generated from title" />
+                helperText={t('form.slugHint')} />
+              <TextField fullWidth label={t('form.employmentType')} select value={formData.employment_type || 'full_time'} onChange={(e) => onFieldChange('employment_type', e.target.value)} size="small">
+                {(['full_time','part_time','contract','freelance','internship','volunteer','other'] as const).map((v) => (
+                  <MenuItem key={v} value={v}>{v.replace('_', ' ')}</MenuItem>
+                ))}
+              </TextField>
+              <TextField fullWidth label={t('form.workMode')} select value={formData.work_mode || 'hybrid'} onChange={(e) => onFieldChange('work_mode', e.target.value)} size="small">
+                {(['remote','on_site','hybrid'] as const).map((v) => (
+                  <MenuItem key={v} value={v}>{v.replace('_', ' ')}</MenuItem>
+                ))}
+              </TextField>
               <TextField fullWidth label={t('form.description')} value={formData.description || ''}
                 onChange={(e) => onFieldChange('description', e.target.value)} size="small"
                 placeholder={t('form.descriptionPlaceholder')} />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Company & Location */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <BusinessRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.companySection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <TextField fullWidth label={t('form.company')} value={formData.company || ''} onChange={(e) => onFieldChange('company', e.target.value)} size="small" />
+              <TextField fullWidth label={t('form.companyUrl')} value={formData.company_url || ''} onChange={(e) => onFieldChange('company_url', e.target.value)} size="small" placeholder="https://..." />
+              <TextField fullWidth label={t('form.companyLogoUrl')} value={formData.company_logo_url || ''} onChange={(e) => onFieldChange('company_logo_url', e.target.value)} size="small" placeholder="https://..." />
+              <TextField fullWidth label={t('form.location')} value={formData.location || ''} onChange={(e) => onFieldChange('location', e.target.value)} size="small" placeholder={t('form.locationPlaceholder')} />
+              <TextField fullWidth label={t('form.department')} value={formData.department || ''} onChange={(e) => onFieldChange('department', e.target.value)} size="small" />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Dates */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CalendarMonthRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.datesSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <TextField fullWidth label={t('form.startDate')} type="date" value={formData.start_date || ''} onChange={(e) => onFieldChange('start_date', e.target.value)} size="small" InputLabelProps={{ shrink: true }} />
+              <TextField fullWidth label={t('form.endDate')} type="date" value={formData.end_date || ''} onChange={(e) => onFieldChange('end_date', e.target.value || undefined)} size="small" InputLabelProps={{ shrink: true }} />
+              <FormControlLabel
+                control={<Switch checked={formData.is_current ?? false} onChange={(e) => onFieldChange('is_current', e.target.checked)} />}
+                label={<Typography variant="body2">{t('form.isCurrent')}</Typography>}
+              />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Tech & Responsibilities */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CodeRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.techSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <DynamicList
+                label={t('form.techStack')}
+                value={(formData.tech_stack || []) as unknown as Record<string, unknown>[]}
+                onChange={(v) => onFieldChange('tech_stack', v)}
+                emptyItem={{ name: '', category: '', version: '' } as Record<string, unknown>}
+                fields={[
+                  { key: 'name', label: t('form.techName'), placeholder: t('form.techNamePlaceholder') },
+                  { key: 'category', label: t('form.techCategory'), placeholder: t('form.techCategoryPlaceholder') },
+                  { key: 'version', label: t('form.techVersion'), placeholder: t('form.techVersionPlaceholder') },
+                ]}
+              />
+              <TagInput
+                label={t('form.responsibilities')}
+                value={formData.responsibilities || []}
+                onChange={(v) => onFieldChange('responsibilities', v)}
+                placeholder={t('form.responsibilities')}
+              />
+              <DynamicList
+                label={t('form.achievements')}
+                value={(formData.achievements || []) as unknown as Record<string, unknown>[]}
+                onChange={(v) => onFieldChange('achievements', v)}
+                emptyItem={{ label: '', value: '' } as Record<string, unknown>}
+                fields={[
+                  { key: 'label', label: t('form.achievementLabel'), placeholder: t('form.achievementLabelPlaceholder') },
+                  { key: 'value', label: t('form.achievementValue'), placeholder: t('form.achievementValuePlaceholder') },
+                ]}
+              />
             </Stack>
           </AccordionDetails>
         </Accordion>
@@ -856,9 +953,9 @@ export default function ExperiencePage() {
     try {
       setLoading(true); setError(null);
       const res = await experienceService.adminGetAll({ limit: 100, include_hidden: true, include_deleted: includeDeleted });
-      setItems(res.items);
+      setItems(Array.isArray(res) ? res : (res.items ?? []));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error loading data');
+      setError(err instanceof Error ? err.message : t('errorLoading'));
     } finally { setLoading(false); }
   }, [includeDeleted]);
 
@@ -867,12 +964,26 @@ export default function ExperiencePage() {
   const openCreateForm = () => { setEditingId(null); setFormData(emptyForm); setFormError(null); setShowForm(true); };
   const openEditForm = (item: Experience) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, slug: item.slug, description: item.description || '', content: item.content || '', images: item.images || [], metadata: item.metadata || {}, visible: item.visible, order: item.order });
+    setFormData({
+      title: item.title, slug: item.slug || '',
+      company: item.company || '', company_url: item.company_url || '',
+      company_logo_url: item.company_logo_url || '', location: item.location || '',
+      department: item.department || '',
+      employment_type: item.employment_type ?? 'full_time',
+      work_mode: item.work_mode ?? 'hybrid',
+      start_date: item.start_date || '', end_date: item.end_date ?? undefined,
+      is_current: item.is_current,
+      tech_stack: item.tech_stack || [], responsibilities: item.responsibilities || [],
+      achievements: item.achievements || [], related_projects: item.related_projects || [],
+      references: item.references || [],
+      description: item.description || '', content: item.content || '',
+      images: item.images || [], metadata: item.metadata || {}, visible: item.visible, order: item.order,
+    });
     setFormError(null); setShowForm(true);
   };
   const closeForm = () => { setShowForm(false); setEditingId(null); setFormData(emptyForm); setFormError(null); setImageUrl(''); setMetaKey(''); setMetaValue(''); };
 
-  const handleFieldChange = (field: keyof FormData, value: string | boolean | number | string[]) =>
+  const handleFieldChange = (field: keyof FormData, value: unknown) =>
     setFormData((p) => ({ ...p, [field]: value }));
 
   const handleTitleChange = (value: string) =>
@@ -895,7 +1006,7 @@ export default function ExperiencePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { setFormError(t('errors.titleRequired')); return; }
-    if (!formData.slug.trim()) { setFormError(t('errors.slugRequired')); return; }
+    if (!formData.slug?.trim()) { setFormError(t('errors.slugRequired')); return; }
     setSaving(true); setFormError(null);
     try {
       if (editingId) await experienceService.update(editingId, { ...formData } as ExperienceUpdate);
@@ -926,7 +1037,7 @@ export default function ExperiencePage() {
             <WorkRoundedIcon sx={{ color: '#fff', fontSize: 22 }} />
           </Box>
         </motion.div>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>Loading experience…</Typography>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>{t('loading')}</Typography>
       </Box>
     );
   }

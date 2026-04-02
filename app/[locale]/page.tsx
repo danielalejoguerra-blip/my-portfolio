@@ -54,7 +54,7 @@ export default async function Home({ params }: Props) {
       <Skills skills={skills} />
       <Experience experiences={experience} />
       <Education educationItems={education} />
-      <Certifications courses={courses} blogPosts={blogPosts} />
+      <Certifications courses={courses} />
       <Blog posts={blogPosts} />
       <Projects projects={projects} />
       <Contact personalInfo={personalInfo} />

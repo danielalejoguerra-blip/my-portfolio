@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import { educationService } from '@/services';
 import type { Education, EducationCreate, EducationUpdate } from '@/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { PageHeader } from '@/app/dashboard/_components';
+import { PageHeader, TagInput, DynamicList } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
@@ -23,6 +23,7 @@ import Chip from '@mui/material/Chip';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
@@ -69,7 +70,15 @@ type ViewMode = 'cards' | 'table';
 type FormData = EducationCreate & { id?: number };
 
 const emptyForm: FormData = {
-  title: '', slug: '', description: '', content: '',
+  title: '', slug: '', institution: '', degree_type: 'other',
+  description: '', content: '',
+  institution_url: '', location: '', field_of_study: '',
+  start_date: '', end_date: '',
+  credential_id: '', credential_url: '',
+  grade: '', honors: '',
+  relevant_coursework: [],
+  activities: [],
+  achievements: [],
   images: [], metadata: {}, visible: true, order: 0,
 };
 
@@ -80,6 +89,7 @@ const generateSlug = (title: string) =>
    SUB-COMPONENT: View Toggle
 ══════════════════════════════════════════ */
 function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
+  const t = useTranslations('dashboard.education');
   return (
     <Box sx={{
       display: 'flex', borderRadius: '12px', overflow: 'hidden',
@@ -90,7 +100,7 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
       {(['cards', 'table'] as ViewMode[]).map((mode) => {
         const active = value === mode;
         return (
-          <Tooltip key={mode} title={mode === 'cards' ? 'Card view' : 'Table view'}>
+          <Tooltip key={mode} title={mode === 'cards' ? t('cardView') : t('tableView')}>
             <Box
               component="button"
               onClick={() => onChange(mode)}
@@ -118,16 +128,17 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
    SUB-COMPONENT: Stats Bar
 ══════════════════════════════════════════ */
 function StatsBar({ items }: { items: Education[] }) {
+  const t = useTranslations('dashboard.education');
   const total   = items.length;
   const visible = items.filter((i) => i.visible && !i.deleted_at).length;
   const hidden  = items.filter((i) => !i.visible && !i.deleted_at).length;
   const deleted = items.filter((i) => !!i.deleted_at).length;
 
   const stats = [
-    { label: 'Total',   value: total,   color: '#6366f1' },
-    { label: 'Visible', value: visible, color: '#22c55e' },
-    { label: 'Hidden',  value: hidden,  color: '#f59e0b' },
-    { label: 'Deleted', value: deleted, color: '#ef4444' },
+    { label: t('stats.total'),   value: total,   color: '#6366f1' },
+    { label: t('stats.visible'), value: visible, color: '#22c55e' },
+    { label: t('stats.hidden'),  value: hidden,  color: '#f59e0b' },
+    { label: t('stats.deleted'), value: deleted, color: '#ef4444' },
   ];
 
   return (
@@ -154,11 +165,12 @@ function StatsBar({ items }: { items: Education[] }) {
    SUB-COMPONENT: Inline Confirm
 ══════════════════════════════════════════ */
 function InlineConfirmButton({
-  onConfirm, label, confirmLabel = 'Confirm', color = 'error', icon, size = 'small',
+  onConfirm, label, confirmLabel, color = 'error', icon, size = 'small',
 }: {
   onConfirm: () => void; label: string; confirmLabel?: string;
   color?: 'error' | 'warning'; icon?: React.ReactNode; size?: 'small' | 'medium';
 }) {
+  const t = useTranslations('dashboard.education');
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -184,7 +196,7 @@ function InlineConfirmButton({
             startIcon={<CheckRoundedIcon sx={{ fontSize: 14 }} />}
             onClick={doConfirm}
             sx={{ fontWeight: 700, borderRadius: '8px', fontSize: '0.72rem' }}>
-            {confirmLabel}
+            {confirmLabel ?? t('confirm')}
           </Button>
           <IconButton size="small"
             onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); setConfirming(false); }}
@@ -224,11 +236,10 @@ function EducationCard({
   t: ReturnType<typeof useTranslations<'dashboard.education'>>;
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
-  const meta = (item.metadata || {}) as Record<string, unknown>;
-  const institution = typeof meta.institution === 'string' ? meta.institution : '';
-  const degree = typeof meta.degree === 'string' ? meta.degree : '';
-  const startDate = typeof meta.start_date === 'string' ? meta.start_date : '';
-  const endDate = typeof meta.end_date === 'string' ? meta.end_date : '';
+  const institution = item.institution || '';
+  const degree = item.degree_type || '';
+  const startDate = item.start_date || '';
+  const endDate = item.end_date || '';
   const descLong = (item.description?.length ?? 0) > 130;
 
   return (
@@ -370,7 +381,7 @@ function EducationCard({
                   endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 15, transition: 'transform 0.25s', transform: descExpanded ? 'rotate(180deg)' : 'none' }} />}
                   onClick={() => setDescExpanded((v) => !v)}
                   sx={{ mt: 0.25, color: 'primary.main', fontWeight: 600, fontSize: '0.7rem', p: 0, minWidth: 0, '&:hover': { background: 'none' } }}>
-                  {descExpanded ? 'Show less' : 'Show more'}
+                  {descExpanded ? t('showLess') : t('showMore')}
                 </Button>
               )}
             </Box>
@@ -397,7 +408,7 @@ function EducationCard({
               </Button>
               <InlineConfirmButton
                 onConfirm={() => onHardDelete(item.id)}
-                label={t('hardDelete')} confirmLabel="Delete forever"
+                label={t('hardDelete')} confirmLabel={t('deleteForever')}
                 color="error" icon={<DeleteForeverRoundedIcon sx={{ fontSize: 14 }} />}
               />
             </>
@@ -435,7 +446,7 @@ function EducationTable({
   onRestore: (id: number) => void;
   t: ReturnType<typeof useTranslations<'dashboard.education'>>;
 }) {
-  const cols = ['Education', 'Slug', 'Description', 'Institution', 'Degree', 'Period', 'Status', 'Actions'];
+  const cols = [t('table.education'), t('table.slug'), t('table.description'), t('table.institution'), t('table.degree'), t('table.period'), t('table.status'), t('table.actions')];
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
       <Paper elevation={0} sx={{
@@ -460,11 +471,10 @@ function EducationTable({
             <TableBody>
               <AnimatePresence>
                 {items.map((item, index) => {
-                  const meta = (item.metadata || {}) as Record<string, unknown>;
-                  const institution = typeof meta.institution === 'string' ? meta.institution : '';
-                  const degree = typeof meta.degree === 'string' ? meta.degree : '';
-                  const startDate = typeof meta.start_date === 'string' ? meta.start_date : '';
-                  const endDate = typeof meta.end_date === 'string' ? meta.end_date : '';
+                  const institution = item.institution || '';
+                  const degree = item.degree_type || '';
+                  const startDate = item.start_date || '';
+                  const endDate = item.end_date || '';
                   return (
                     <motion.tr key={item.id}
                       initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
@@ -515,11 +525,11 @@ function EducationTable({
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)' }}>
                         {item.deleted_at ? (
-                          <Chip label="Deleted" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
+                          <Chip label={t('deleted')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
                         ) : item.visible ? (
-                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Visible" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
+                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('visible')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
                         ) : (
-                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Hidden" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
+                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('hidden')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
                         )}
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)', whiteSpace: 'nowrap' }}>
@@ -563,7 +573,7 @@ function FormDrawer({
   imageUrl: string; metaKey: string; metaValue: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onFieldChange: (field: keyof FormData, value: string | boolean | number | string[]) => void;
+  onFieldChange: (field: keyof FormData, value: unknown) => void;
   onTitleChange: (v: string) => void;
   onImageUrlChange: (v: string) => void;
   onAddImage: () => void;
@@ -612,7 +622,7 @@ function FormDrawer({
               {editingId ? t('editTitle') : t('createTitle')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {editingId ? `Editing #${editingId}` : 'Fill in the education details'}
+              {editingId ? t('editingSubtitle', { id: String(editingId) }) : t('createSubtitle')}
             </Typography>
           </Box>
         </Stack>
@@ -639,12 +649,99 @@ function FormDrawer({
             <Stack spacing={2}>
               <TextField fullWidth label={t('form.title')} value={formData.title}
                 onChange={(e) => onTitleChange(e.target.value)} required size="small" />
-              <TextField fullWidth label={t('form.slug')} value={formData.slug}
-                onChange={(e) => onFieldChange('slug', e.target.value)} required size="small"
-                helperText="Auto-generated from title" />
+              <TextField fullWidth label={t('form.institution')} value={formData.institution || ''}
+                onChange={(e) => onFieldChange('institution', e.target.value)} required size="small" placeholder={t('form.institutionPlaceholder')} />
+              <TextField fullWidth label={t('form.degreeType')} select value={formData.degree_type || 'other'}
+                onChange={(e) => onFieldChange('degree_type', e.target.value)} size="small">
+                {(['bachelor','master','phd','associate','bootcamp','certification','online_course','high_school','other'] as const).map((v) => (
+                  <MenuItem key={v} value={v}>{v.replace(/_/g, ' ')}</MenuItem>
+                ))}
+              </TextField>
+              <TextField fullWidth label={t('form.fieldOfStudy')} value={formData.field_of_study || ''}
+                onChange={(e) => onFieldChange('field_of_study', e.target.value)} size="small" placeholder={t('form.fieldOfStudyPlaceholder')} />
+              <TextField fullWidth label={t('form.location')} value={formData.location || ''}
+                onChange={(e) => onFieldChange('location', e.target.value)} size="small" placeholder={t('form.locationPlaceholder')} />
+              <TextField fullWidth label={t('form.slug')} value={formData.slug || ''}
+                onChange={(e) => onFieldChange('slug', e.target.value)} size="small" helperText={t('form.slugHint')} />
               <TextField fullWidth label={t('form.description')} value={formData.description || ''}
                 onChange={(e) => onFieldChange('description', e.target.value)} size="small"
                 placeholder={t('form.descriptionPlaceholder')} />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Dates & Credentials */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CalendarMonthRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.datesSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={1.5}>
+                <TextField fullWidth label={t('form.startDate')} type="date" value={formData.start_date || ''}
+                  onChange={(e) => onFieldChange('start_date', e.target.value)} size="small"
+                  slotProps={{ inputLabel: { shrink: true } }} />
+                <TextField fullWidth label={t('form.endDate')} type="date" value={formData.end_date || ''}
+                  onChange={(e) => onFieldChange('end_date', e.target.value)} size="small"
+                  slotProps={{ inputLabel: { shrink: true } }} helperText={t('form.endDateHint')} />
+              </Stack>
+              <Stack direction="row" spacing={1.5}>
+                <TextField fullWidth label={t('form.grade')} value={formData.grade || ''}
+                  onChange={(e) => onFieldChange('grade', e.target.value)} size="small" placeholder={t('form.gradePlaceholder')} />
+                <TextField fullWidth label={t('form.honors')} value={formData.honors || ''}
+                  onChange={(e) => onFieldChange('honors', e.target.value)} size="small" placeholder={t('form.honorsPlaceholder')} />
+              </Stack>
+              <TextField fullWidth label={t('form.credentialId')} value={formData.credential_id || ''}
+                onChange={(e) => onFieldChange('credential_id', e.target.value)} size="small" />
+              <TextField fullWidth label={t('form.credentialUrl')} value={formData.credential_url || ''}
+                onChange={(e) => onFieldChange('credential_url', e.target.value)} size="small" placeholder="https://" />
+              <TextField fullWidth label={t('form.institutionUrl')} value={formData.institution_url || ''}
+                onChange={(e) => onFieldChange('institution_url', e.target.value)} size="small" placeholder="https://" />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Coursework, Activities & Achievements */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <WorkspacePremiumRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.courseworkSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <TagInput
+                label={t('form.relevantCoursework')}
+                value={formData.relevant_coursework || []}
+                onChange={(v) => onFieldChange('relevant_coursework', v)}
+                placeholder="Algorithms, Distributed Systems…"
+              />
+              <DynamicList
+                label={t('form.activities')}
+                value={(formData.activities || []) as unknown as Record<string, unknown>[]}
+                onChange={(v) => onFieldChange('activities', v)}
+                emptyItem={{ name: '', role: '', description: '' } as Record<string, unknown>}
+                fields={[
+                  { key: 'name', label: 'Name', placeholder: 'ACM Club' },
+                  { key: 'role', label: 'Role', placeholder: 'President' },
+                  { key: 'description', label: 'Description', placeholder: '…', multiline: true },
+                ]}
+              />
+              <DynamicList
+                label={t('form.achievements')}
+                value={(formData.achievements || []) as unknown as Record<string, unknown>[]}
+                onChange={(v) => onFieldChange('achievements', v)}
+                emptyItem={{ title: '', year: undefined, description: '' } as Record<string, unknown>}
+                fields={[
+                  { key: 'title', label: 'Title', placeholder: 'Best Thesis Award' },
+                  { key: 'year', label: 'Year', type: 'number', placeholder: '2024' },
+                  { key: 'description', label: 'Description', placeholder: '…', multiline: true },
+                ]}
+              />
             </Stack>
           </AccordionDetails>
         </Accordion>
@@ -839,7 +936,7 @@ export default function EducationPage() {
       const res = await educationService.adminGetAll({ limit: 100, include_hidden: true, include_deleted: includeDeleted });
       setItems(res.items);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error loading data');
+      setError(err instanceof Error ? err.message : t('errorLoading'));
     } finally { setLoading(false); }
   }, [includeDeleted]);
 
@@ -848,12 +945,25 @@ export default function EducationPage() {
   const openCreateForm = () => { setEditingId(null); setFormData(emptyForm); setFormError(null); setShowForm(true); };
   const openEditForm = (item: Education) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, slug: item.slug, description: item.description || '', content: item.content || '', images: item.images || [], metadata: item.metadata || {}, visible: item.visible, order: item.order });
+    setFormData({
+      title: item.title, slug: item.slug,
+      institution: item.institution, degree_type: item.degree_type,
+      description: item.description || '', content: item.content || '',
+      institution_url: item.institution_url || '', location: item.location || '',
+      field_of_study: item.field_of_study || '',
+      start_date: item.start_date || '', end_date: item.end_date || '',
+      credential_id: item.credential_id || '', credential_url: item.credential_url || '',
+      grade: item.grade || '', honors: item.honors || '',
+      relevant_coursework: item.relevant_coursework || [],
+      activities: item.activities || [], achievements: item.achievements || [],
+      images: item.images || [], metadata: item.metadata || {},
+      visible: item.visible, order: item.order,
+    });
     setFormError(null); setShowForm(true);
   };
   const closeForm = () => { setShowForm(false); setEditingId(null); setFormData(emptyForm); setFormError(null); setImageUrl(''); setMetaKey(''); setMetaValue(''); };
 
-  const handleFieldChange = (field: keyof FormData, value: string | boolean | number | string[]) =>
+  const handleFieldChange = (field: keyof FormData, value: unknown) =>
     setFormData((p) => ({ ...p, [field]: value }));
 
   const handleTitleChange = (value: string) =>
@@ -876,7 +986,7 @@ export default function EducationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { setFormError(t('errors.titleRequired')); return; }
-    if (!formData.slug.trim()) { setFormError(t('errors.slugRequired')); return; }
+    if (!formData.slug?.trim()) { setFormError(t('errors.slugRequired')); return; }
     setSaving(true); setFormError(null);
     try {
       if (editingId) await educationService.update(editingId, { ...formData } as EducationUpdate);
@@ -907,7 +1017,7 @@ export default function EducationPage() {
             <SchoolRoundedIcon sx={{ color: '#fff', fontSize: 22 }} />
           </Box>
         </motion.div>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>Loading education…</Typography>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>{t('loading')}</Typography>
       </Box>
     );
   }

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import { projectService } from '@/services';
 import type { Project, ProjectCreate, ProjectUpdate } from '@/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { PageHeader } from '@/app/dashboard/_components';
+import { PageHeader, DynamicList } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
@@ -23,6 +23,7 @@ import Chip from '@mui/material/Chip';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
@@ -68,8 +69,11 @@ type ViewMode = 'cards' | 'table';
 type FormData = ProjectCreate & { id?: number };
 
 const emptyForm: FormData = {
-  title: '', slug: '', description: '', content: '',
-  images: [], metadata: {}, visible: true, order: 0,
+  title: '', slug: '', status: 'completed', category: 'web',
+  description: '', content: '',
+  project_url: '', repository_url: '',
+  tech_stack: [], metrics: [], features: [], challenges: [],
+  featured: false, images: [], metadata: {}, visible: true, order: 0,
 };
 
 const generateSlug = (title: string) =>
@@ -79,6 +83,7 @@ const generateSlug = (title: string) =>
    SUB-COMPONENT: View Toggle
 ══════════════════════════════════════════ */
 function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
+  const t = useTranslations('dashboard.projects');
   return (
     <Box sx={{
       display: 'flex', borderRadius: '12px', overflow: 'hidden',
@@ -89,7 +94,7 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
       {(['cards', 'table'] as ViewMode[]).map((mode) => {
         const active = value === mode;
         return (
-          <Tooltip key={mode} title={mode === 'cards' ? 'Card view' : 'Table view'}>
+          <Tooltip key={mode} title={mode === 'cards' ? t('cardView') : t('tableView')}>
             <Box
               component="button"
               onClick={() => onChange(mode)}
@@ -158,11 +163,12 @@ function StatsBar({ items }: { items: Project[] }) {
    SUB-COMPONENT: Inline Confirm
 ══════════════════════════════════════════ */
 function InlineConfirmButton({
-  onConfirm, label, confirmLabel = 'Confirm', color = 'error', icon, size = 'small',
+  onConfirm, label, confirmLabel, color = 'error', icon, size = 'small',
 }: {
   onConfirm: () => void; label: string; confirmLabel?: string;
   color?: 'error' | 'warning'; icon?: React.ReactNode; size?: 'small' | 'medium';
 }) {
+  const t = useTranslations('dashboard.projects');
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -188,7 +194,7 @@ function InlineConfirmButton({
             startIcon={<CheckRoundedIcon sx={{ fontSize: 14 }} />}
             onClick={doConfirm}
             sx={{ fontWeight: 700, borderRadius: '8px', fontSize: '0.72rem' }}>
-            {confirmLabel}
+            {confirmLabel ?? t('confirm')}
           </Button>
           <IconButton size="small"
             onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); setConfirming(false); }}
@@ -228,10 +234,9 @@ function ProjectCard({
   t: ReturnType<typeof useTranslations<'dashboard.projects'>>;
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
-  const meta = (item.metadata || {}) as Record<string, unknown>;
-  const techs = Array.isArray(meta.technologies) ? (meta.technologies as string[]) : [];
-  const github = typeof meta.github === 'string' ? meta.github : '';
-  const live = typeof meta.live === 'string' ? meta.live : '';
+  const techs = (item.tech_stack || []).map((ts) => ts.name);
+  const github = item.repository_url || '';
+  const live = item.project_url || '';
   const descLong = (item.description?.length ?? 0) > 130;
 
   return (
@@ -347,7 +352,7 @@ function ProjectCard({
                   endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 15, transition: 'transform 0.25s', transform: descExpanded ? 'rotate(180deg)' : 'none' }} />}
                   onClick={() => setDescExpanded((v) => !v)}
                   sx={{ mt: 0.25, color: 'primary.main', fontWeight: 600, fontSize: '0.7rem', p: 0, minWidth: 0, '&:hover': { background: 'none' } }}>
-                  {descExpanded ? 'Show less' : 'Show more'}
+                  {descExpanded ? t('showLess') : t('showMore')}
                 </Button>
               )}
             </Box>
@@ -403,7 +408,7 @@ function ProjectCard({
               </Button>
               <InlineConfirmButton
                 onConfirm={() => onHardDelete(item.id)}
-                label={t('hardDelete')} confirmLabel="Delete forever"
+                label={t('hardDelete')} confirmLabel={t('deleteForever')}
                 color="error" icon={<DeleteForeverRoundedIcon sx={{ fontSize: 14 }} />}
               />
             </>
@@ -441,7 +446,7 @@ function ProjectTable({
   onRestore: (id: number) => void;
   t: ReturnType<typeof useTranslations<'dashboard.projects'>>;
 }) {
-  const cols = ['Project', 'Slug', 'Description', 'Tech', 'Links', 'Images', 'Status', 'Actions'];
+  const cols = [t('table.project'), t('table.slug'), t('table.description'), t('table.tech'), t('table.links'), t('table.images'), t('table.status'), t('table.actions')];
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
       <Paper elevation={0} sx={{
@@ -466,10 +471,9 @@ function ProjectTable({
             <TableBody>
               <AnimatePresence>
                 {items.map((item, index) => {
-                  const meta = (item.metadata || {}) as Record<string, unknown>;
-                  const techs = Array.isArray(meta.technologies) ? (meta.technologies as string[]) : [];
-                  const github = typeof meta.github === 'string' ? meta.github : '';
-                  const live = typeof meta.live === 'string' ? meta.live : '';
+                  const techs = (item.tech_stack || []).map((ts) => ts.name);
+                  const github = item.repository_url || '';
+                  const live = item.project_url || '';
                   return (
                     <motion.tr key={item.id}
                       initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
@@ -535,11 +539,11 @@ function ProjectTable({
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)' }}>
                         {item.deleted_at ? (
-                          <Chip label="Deleted" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
+                          <Chip label={t('deleted')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
                         ) : item.visible ? (
-                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Visible" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
+                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('visible')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
                         ) : (
-                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Hidden" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
+                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('hidden')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
                         )}
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)', whiteSpace: 'nowrap' }}>
@@ -583,7 +587,7 @@ function FormDrawer({
   imageUrl: string; metaKey: string; metaValue: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onFieldChange: (field: keyof FormData, value: string | boolean | number | string[]) => void;
+  onFieldChange: (field: keyof FormData, value: unknown) => void;
   onTitleChange: (v: string) => void;
   onImageUrlChange: (v: string) => void;
   onAddImage: () => void;
@@ -632,7 +636,7 @@ function FormDrawer({
               {editingId ? t('editTitle') : t('createTitle')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {editingId ? `Editing #${editingId}` : 'Fill in the project details'}
+              {editingId ? t('editingSubtitle', { id: editingId }) : t('createSubtitle')}
             </Typography>
           </Box>
         </Stack>
@@ -659,13 +663,108 @@ function FormDrawer({
             <Stack spacing={2}>
               <TextField fullWidth label={t('form.title')} value={formData.title}
                 onChange={(e) => onTitleChange(e.target.value)} required size="small" />
-              <TextField fullWidth label={t('form.slug')} value={formData.slug}
-                onChange={(e) => onFieldChange('slug', e.target.value)} required size="small"
-                helperText="Auto-generated from title" />
+              <Stack direction="row" spacing={1.5}>
+                <TextField fullWidth label={t('form.status')} select value={formData.status || 'completed'}
+                  onChange={(e) => onFieldChange('status', e.target.value)} size="small">
+                  {(['completed','in_progress','maintained','archived'] as const).map((v) => (
+                    <MenuItem key={v} value={v}>{v.replace(/_/g, ' ')}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField fullWidth label={t('form.category')} select value={formData.category || 'web'}
+                  onChange={(e) => onFieldChange('category', e.target.value)} size="small">
+                  {(['web','mobile','api','cli','data','devops','game','other'] as const).map((v) => (
+                    <MenuItem key={v} value={v}>{v}</MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
+              <TextField fullWidth label={t('form.role')} value={formData.role || ''}
+                onChange={(e) => onFieldChange('role', e.target.value)} size="small" placeholder={t('form.rolePlaceholder')} />
+              <TextField fullWidth label={t('form.slug')} value={formData.slug || ''}
+                onChange={(e) => onFieldChange('slug', e.target.value)} size="small" helperText={t('form.slugHint')} />
               <TextField fullWidth label={t('form.description')} value={formData.description || ''}
                 onChange={(e) => onFieldChange('description', e.target.value)} size="small"
                 placeholder={t('form.descriptionPlaceholder')} />
             </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Project Details */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <TuneRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.projectDetails')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={1.5}>
+                <TextField fullWidth label={t('form.startDate')} type="date" value={formData.start_date || ''}
+                  onChange={(e) => onFieldChange('start_date', e.target.value)} size="small"
+                  slotProps={{ inputLabel: { shrink: true } }} />
+                <TextField fullWidth label={t('form.endDate')} type="date" value={formData.end_date || ''}
+                  onChange={(e) => onFieldChange('end_date', e.target.value)} size="small"
+                  slotProps={{ inputLabel: { shrink: true } }} />
+              </Stack>
+              <Stack direction="row" spacing={1.5}>
+                <TextField fullWidth label={t('form.teamSize')} type="number" value={formData.team_size ?? ''}
+                  onChange={(e) => onFieldChange('team_size', e.target.value ? Number(e.target.value) : undefined)} size="small" />
+                <TextField fullWidth label={t('form.client')} value={formData.client || ''}
+                  onChange={(e) => onFieldChange('client', e.target.value)} size="small" placeholder="Acme Corp" />
+              </Stack>
+              <FormControlLabel
+                control={<Switch checked={formData.featured ?? false} onChange={(e) => onFieldChange('featured', e.target.checked)} />}
+                label={<Typography variant="body2">{t('form.featured')}</Typography>}
+              />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Links */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <LanguageRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.links')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <TextField fullWidth label={t('form.projectUrl')} value={formData.project_url || ''}
+                onChange={(e) => onFieldChange('project_url', e.target.value)} size="small" placeholder="https://" />
+              <TextField fullWidth label={t('form.repositoryUrl')} value={formData.repository_url || ''}
+                onChange={(e) => onFieldChange('repository_url', e.target.value)} size="small" placeholder="https://github.com/" />
+              <TextField fullWidth label={t('form.documentationUrl')} value={formData.documentation_url || ''}
+                onChange={(e) => onFieldChange('documentation_url', e.target.value)} size="small" placeholder="https://" />
+              <TextField fullWidth label={t('form.caseStudyUrl')} value={formData.case_study_url || ''}
+                onChange={(e) => onFieldChange('case_study_url', e.target.value)} size="small" placeholder="https://" />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Tech Stack */}
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <DataObjectRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.techStack')}</Typography>
+              {(formData.tech_stack?.length ?? 0) > 0 && (
+                <Chip label={formData.tech_stack!.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.primary.main, 0.12), color: 'primary.main' }} />
+              )}
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <DynamicList
+              label={t('form.techStack')}
+              value={(formData.tech_stack || []) as unknown as Record<string, unknown>[]}
+              onChange={(v) => onFieldChange('tech_stack', v)}
+              emptyItem={{ name: '', category: '', version: '' } as Record<string, unknown>}
+              fields={[
+                { key: 'name', label: t('form.techName'), placeholder: t('form.techNamePlaceholder') },
+                { key: 'category', label: t('form.techCategory'), placeholder: t('form.techCategoryPlaceholder') },
+                { key: 'version', label: t('form.techVersion'), placeholder: t('form.techVersionPlaceholder') },
+              ]}
+            />
           </AccordionDetails>
         </Accordion>
 
@@ -859,7 +958,7 @@ export default function ProjectsPage() {
       const res = await projectService.adminGetAll({ limit: 100, include_hidden: true, include_deleted: includeDeleted });
       setItems(res.items);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error loading data');
+      setError(err instanceof Error ? err.message : t('errorLoading'));
     } finally { setLoading(false); }
   }, [includeDeleted]);
 
@@ -868,12 +967,24 @@ export default function ProjectsPage() {
   const openCreateForm = () => { setEditingId(null); setFormData(emptyForm); setFormError(null); setShowForm(true); };
   const openEditForm = (item: Project) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, slug: item.slug, description: item.description || '', content: item.content || '', images: item.images || [], metadata: item.metadata || {}, visible: item.visible, order: item.order });
+    setFormData({
+      title: item.title, slug: item.slug || '', status: item.status, category: item.category ?? undefined,
+      description: item.description || '', content: item.content || '',
+      role: item.role || '', client: item.client || '',
+      start_date: item.start_date || '', end_date: item.end_date || '',
+      team_size: item.team_size ?? undefined,
+      project_url: item.project_url || '', repository_url: item.repository_url || '',
+      documentation_url: item.documentation_url || '', case_study_url: item.case_study_url || '',
+      tech_stack: item.tech_stack || [], metrics: item.metrics || [],
+      features: item.features || [], challenges: item.challenges || [],
+      featured: item.featured, images: item.images || [],
+      metadata: item.metadata || {}, visible: item.visible, order: item.order,
+    });
     setFormError(null); setShowForm(true);
   };
   const closeForm = () => { setShowForm(false); setEditingId(null); setFormData(emptyForm); setFormError(null); setImageUrl(''); setMetaKey(''); setMetaValue(''); };
 
-  const handleFieldChange = (field: keyof FormData, value: string | boolean | number | string[]) =>
+  const handleFieldChange = (field: keyof FormData, value: unknown) =>
     setFormData((p) => ({ ...p, [field]: value }));
 
   const handleTitleChange = (value: string) =>
@@ -896,7 +1007,7 @@ export default function ProjectsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { setFormError(t('errors.titleRequired')); return; }
-    if (!formData.slug.trim()) { setFormError(t('errors.slugRequired')); return; }
+    if (!formData.slug?.trim()) { setFormError(t('errors.slugRequired')); return; }
     setSaving(true); setFormError(null);
     try {
       if (editingId) await projectService.update(editingId, { ...formData } as ProjectUpdate);
@@ -927,7 +1038,7 @@ export default function ProjectsPage() {
             <FolderRoundedIcon sx={{ color: '#fff', fontSize: 22 }} />
           </Box>
         </motion.div>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>Loading projects…</Typography>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>{t('loading')}</Typography>
       </Box>
     );
   }

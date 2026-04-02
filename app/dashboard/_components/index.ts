@@ -5,3 +5,5 @@ export { default as TopBar } from './TopBar';
 export { default as NavItem } from './NavItem';
 export { default as SectionLabel } from './SectionLabel';
 export { default as PageHeader } from './PageHeader';
+export { default as TagInput } from './TagInput';
+export { default as DynamicList } from './DynamicList';

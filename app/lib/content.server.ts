@@ -48,7 +48,7 @@ export async function getPublicCourses(limit: number = 20, lang?: string): Promi
 
 export async function getPublicBlog(limit: number = 20, lang?: string): Promise<BlogPost[]> {
   const items = await fetchPublicList<BlogPost>('/blog', limit, lang);
-  return items.filter((item) => item.visible && !item.deleted_at);
+  return items.filter((item) => !item.deleted_at);
 }
 
 export async function getPublicBlogBySlug(slug: string, lang?: string): Promise<BlogPost | null> {

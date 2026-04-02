@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import { courseService } from '@/services';
 import type { Course, CourseCreate, CourseUpdate } from '@/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { PageHeader } from '@/app/dashboard/_components';
+import { PageHeader, DynamicList } from '@/app/dashboard/_components';
 import ImageUrlInput from '@/app/components/shared/ImageUrlInput';
 
 import Box from '@mui/material/Box';
@@ -64,6 +64,10 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
 import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import MenuItem from '@mui/material/MenuItem';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
 
 /* ─── Types ─── */
 type ViewMode = 'cards' | 'table';
@@ -71,6 +75,11 @@ type FormData = CourseCreate & { id?: number };
 
 const emptyForm: FormData = {
   title: '', slug: '', description: '', content: '',
+  is_certification: false, category: undefined, level: undefined,
+  platform: '', platform_url: '', instructor: '', instructor_url: '',
+  completion_date: undefined, expiration_date: undefined, duration_hours: undefined,
+  credential_id: '', certificate_url: '', certificate_image_url: '', badge_url: '',
+  skills_gained: [], syllabus: [],
   images: [], metadata: {}, visible: true, order: 0,
 };
 
@@ -81,6 +90,7 @@ const generateSlug = (title: string) =>
    SUB-COMPONENT: View Toggle
 ══════════════════════════════════════════ */
 function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
+  const t = useTranslations('dashboard.courses');
   return (
     <Box sx={{
       display: 'flex', borderRadius: '12px', overflow: 'hidden',
@@ -91,7 +101,7 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
       {(['cards', 'table'] as ViewMode[]).map((mode) => {
         const active = value === mode;
         return (
-          <Tooltip key={mode} title={mode === 'cards' ? 'Card view' : 'Table view'}>
+          <Tooltip key={mode} title={mode === 'cards' ? t('cardView') : t('tableView')}>
             <Box component="button" onClick={() => onChange(mode)} sx={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 34, height: 30, borderRadius: '9px', border: 'none',
@@ -113,15 +123,16 @@ function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMo
    SUB-COMPONENT: Stats Bar
 ══════════════════════════════════════════ */
 function StatsBar({ items }: { items: Course[] }) {
+  const t = useTranslations('dashboard.courses');
   const total   = items.length;
   const visible = items.filter((i) => i.visible && !i.deleted_at).length;
   const hidden  = items.filter((i) => !i.visible && !i.deleted_at).length;
   const deleted = items.filter((i) => !!i.deleted_at).length;
   const stats = [
-    { label: 'Total',   value: total,   color: '#6366f1' },
-    { label: 'Visible', value: visible, color: '#22c55e' },
-    { label: 'Hidden',  value: hidden,  color: '#f59e0b' },
-    { label: 'Deleted', value: deleted, color: '#ef4444' },
+    { label: t('stats.total'),   value: total,   color: '#6366f1' },
+    { label: t('stats.visible'), value: visible, color: '#22c55e' },
+    { label: t('stats.hidden'),  value: hidden,  color: '#f59e0b' },
+    { label: t('stats.deleted'), value: deleted, color: '#ef4444' },
   ];
   return (
     <Stack direction="row" spacing={1.5} flexWrap="wrap">
@@ -145,11 +156,12 @@ function StatsBar({ items }: { items: Course[] }) {
    SUB-COMPONENT: Inline Confirm
 ══════════════════════════════════════════ */
 function InlineConfirmButton({
-  onConfirm, label, confirmLabel = 'Confirm', color = 'error', icon, size = 'small',
+  onConfirm, label, confirmLabel, color = 'error', icon, size = 'small',
 }: {
   onConfirm: () => void; label: string; confirmLabel?: string;
   color?: 'error' | 'warning'; icon?: React.ReactNode; size?: 'small' | 'medium';
 }) {
+  const t = useTranslations('dashboard.courses');
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startConfirm = () => { setConfirming(true); timerRef.current = setTimeout(() => setConfirming(false), 3000); };
@@ -159,7 +171,7 @@ function InlineConfirmButton({
     <AnimatePresence mode="wait" initial={false}>
       {confirming ? (
         <motion.div key="confirm" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.15 }} style={{ display: 'flex', gap: 4 }}>
-          <Button size={size} color={color} variant="contained" startIcon={<CheckRoundedIcon sx={{ fontSize: 14 }} />} onClick={doConfirm} sx={{ fontWeight: 700, borderRadius: '8px', fontSize: '0.72rem' }}>{confirmLabel}</Button>
+          <Button size={size} color={color} variant="contained" startIcon={<CheckRoundedIcon sx={{ fontSize: 14 }} />} onClick={doConfirm} sx={{ fontWeight: 700, borderRadius: '8px', fontSize: '0.72rem' }}>{confirmLabel ?? t('confirm')}</Button>
           <IconButton size="small" onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); setConfirming(false); }} sx={{ borderRadius: '8px', bgcolor: (th) => alpha(th.palette.text.primary, 0.05) }}><CloseRoundedIcon sx={{ fontSize: 14 }} /></IconButton>
         </motion.div>
       ) : (
@@ -185,12 +197,11 @@ function CourseCard({
   t: ReturnType<typeof useTranslations<'dashboard.courses'>>;
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
-  const meta = (item.metadata || {}) as Record<string, unknown>;
-  const platform   = typeof meta.platform === 'string' ? meta.platform : '';
-  const instructor = typeof meta.instructor === 'string' ? meta.instructor : '';
-  const duration   = typeof meta.duration === 'string' ? meta.duration : '';
-  const url        = typeof meta.url === 'string' ? meta.url : '';
-  const techs      = Array.isArray(meta.technologies) ? (meta.technologies as string[]) : [];
+  const platform   = item.platform || '';
+  const instructor = item.instructor || '';
+  const duration   = item.duration_hours ? `${item.duration_hours}h` : '';
+  const url        = item.platform_url || '';
+  const techs      = (item.skills_gained || []).map((s) => s.name);
   const descLong   = (item.description?.length ?? 0) > 130;
 
   return (
@@ -292,7 +303,7 @@ function CourseCard({
                 <Button size="small" endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 15, transition: 'transform 0.25s', transform: descExpanded ? 'rotate(180deg)' : 'none' }} />}
                   onClick={() => setDescExpanded((v) => !v)}
                   sx={{ mt: 0.25, color: 'primary.main', fontWeight: 600, fontSize: '0.7rem', p: 0, minWidth: 0, '&:hover': { background: 'none' } }}>
-                  {descExpanded ? 'Show less' : 'Show more'}
+                  {descExpanded ? t('showLess') : t('showMore')}
                 </Button>
               )}
             </Box>
@@ -329,7 +340,7 @@ function CourseCard({
                 sx={{ borderRadius: '8px', fontWeight: 600, fontSize: '0.72rem', bgcolor: (th) => alpha(th.palette.success.main, 0.08), '&:hover': { bgcolor: (th) => alpha(th.palette.success.main, 0.15) } }}>
                 {t('restore')}
               </Button>
-              <InlineConfirmButton onConfirm={() => onHardDelete(item.id)} label={t('hardDelete')} confirmLabel="Delete forever" color="error" icon={<DeleteForeverRoundedIcon sx={{ fontSize: 14 }} />} />
+              <InlineConfirmButton onConfirm={() => onHardDelete(item.id)} label={t('hardDelete')} confirmLabel={t('deleteForever')} color="error" icon={<DeleteForeverRoundedIcon sx={{ fontSize: 14 }} />} />
             </>
           ) : (
             <>
@@ -360,7 +371,7 @@ function CourseTable({
   onRestore: (id: number) => void;
   t: ReturnType<typeof useTranslations<'dashboard.courses'>>;
 }) {
-  const cols = ['Course', 'Slug', 'Description', 'Platform', 'Instructor', 'Duration', 'Status', 'Actions'];
+  const cols = [t('table.course'), t('table.slug'), t('table.description'), t('table.platform'), t('table.instructor'), t('table.duration'), t('table.status'), t('table.actions')];
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
       <Paper elevation={0} sx={{ borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', backdropFilter: 'blur(12px)' }}>
@@ -376,10 +387,9 @@ function CourseTable({
             <TableBody>
               <AnimatePresence>
                 {items.map((item, index) => {
-                  const meta = (item.metadata || {}) as Record<string, unknown>;
-                  const platform   = typeof meta.platform === 'string' ? meta.platform : '';
-                  const instructor = typeof meta.instructor === 'string' ? meta.instructor : '';
-                  const duration   = typeof meta.duration === 'string' ? meta.duration : '';
+                  const platform   = item.platform || '';
+                  const instructor = item.instructor || '';
+                  const duration   = item.duration_hours ? `${item.duration_hours}h` : '';
                   return (
                     <motion.tr key={item.id} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={{ delay: index * 0.05 }} style={{ opacity: item.deleted_at ? 0.6 : 1 }}>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)' }}>
@@ -420,11 +430,11 @@ function CourseTable({
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)' }}>
                         {item.deleted_at ? (
-                          <Chip label="Deleted" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
+                          <Chip label={t('deleted')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.error.main, 0.1), color: 'error.main' }} />
                         ) : item.visible ? (
-                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Visible" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
+                          <Chip icon={<VisibilityRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('visible')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.success.main, 0.1), color: 'success.main', '& .MuiChip-icon': { color: 'success.main' } }} />
                         ) : (
-                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label="Hidden" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
+                          <Chip icon={<VisibilityOffRoundedIcon sx={{ fontSize: '12px !important' }} />} label={t('hidden')} size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: (th) => alpha(th.palette.warning.main, 0.1), color: 'warning.main', '& .MuiChip-icon': { color: 'warning.main' } }} />
                         )}
                       </TableCell>
                       <TableCell sx={{ borderBottom: '1px solid var(--glass-border)', whiteSpace: 'nowrap' }}>
@@ -468,7 +478,7 @@ function FormDrawer({
   imageUrl: string; metaKey: string; metaValue: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onFieldChange: (field: keyof FormData, value: string | boolean | number | string[]) => void;
+  onFieldChange: (field: keyof FormData, value: unknown) => void;
   onTitleChange: (v: string) => void;
   onImageUrlChange: (v: string) => void;
   onAddImage: () => void;
@@ -498,7 +508,7 @@ function FormDrawer({
           </Box>
           <Box>
             <Typography variant="subtitle1" fontWeight={800} letterSpacing="-0.02em">{editingId ? t('editTitle') : t('createTitle')}</Typography>
-            <Typography variant="caption" color="text.secondary">{editingId ? `Editing #${editingId}` : 'Fill in the course details'}</Typography>
+            <Typography variant="caption" color="text.secondary">{editingId ? t('editingSubtitle', { id: editingId }) : t('createSubtitle')}</Typography>
           </Box>
         </Stack>
         <IconButton size="small" onClick={onClose} sx={{ borderRadius: '10px', bgcolor: (th) => alpha(th.palette.text.primary, 0.06), '&:hover': { bgcolor: (th) => alpha(th.palette.text.primary, 0.12) } }}><CloseRoundedIcon fontSize="small" /></IconButton>
@@ -518,7 +528,23 @@ function FormDrawer({
           <AccordionDetails sx={{ pt: 0, pb: 2 }}>
             <Stack spacing={2}>
               <TextField fullWidth label={t('form.title')} value={formData.title} onChange={(e) => onTitleChange(e.target.value)} required size="small" />
-              <TextField fullWidth label={t('form.slug')} value={formData.slug} onChange={(e) => onFieldChange('slug', e.target.value)} required size="small" helperText="Auto-generated from title" />
+              <TextField fullWidth label={t('form.slug')} value={formData.slug} onChange={(e) => onFieldChange('slug', e.target.value)} required size="small" helperText={t('form.slugHint')} />
+              <TextField fullWidth select label={t('form.category')} value={formData.category || ''} onChange={(e) => onFieldChange('category', e.target.value || undefined)} size="small">
+                <MenuItem value=""><em>{t('none')}</em></MenuItem>
+                {(['backend','frontend','mobile','devops','data','design','security','cloud','soft_skills','other'] as const).map((c) => (
+                  <MenuItem key={c} value={c}>{c}</MenuItem>
+                ))}
+              </TextField>
+              <TextField fullWidth select label={t('form.level')} value={formData.level || ''} onChange={(e) => onFieldChange('level', e.target.value || undefined)} size="small">
+                <MenuItem value=""><em>{t('none')}</em></MenuItem>
+                {(['beginner','intermediate','advanced','expert'] as const).map((l) => (
+                  <MenuItem key={l} value={l}>{l}</MenuItem>
+                ))}
+              </TextField>
+              <FormControlLabel
+                control={<Switch checked={formData.is_certification ?? false} onChange={(e) => onFieldChange('is_certification', e.target.checked)} />}
+                label={<Typography variant="body2">{t('form.isCertification')}</Typography>}
+              />
               <TextField fullWidth label={t('form.description')} value={formData.description || ''} onChange={(e) => onFieldChange('description', e.target.value)} size="small" placeholder={t('form.descriptionPlaceholder')} />
             </Stack>
           </AccordionDetails>
@@ -533,6 +559,77 @@ function FormDrawer({
           </AccordionSummary>
           <AccordionDetails sx={{ pt: 0, pb: 2 }}>
             <TextField fullWidth multiline rows={6} value={formData.content || ''} onChange={(e) => onFieldChange('content', e.target.value)} size="small" placeholder={t('form.contentPlaceholder')} sx={{ '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: 13 } }} />
+          </AccordionDetails>
+        </Accordion>
+
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <BusinessRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.platformSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <TextField fullWidth label={t('form.platform')} value={formData.platform || ''} onChange={(e) => onFieldChange('platform', e.target.value)} size="small" placeholder="Udemy, Coursera…" />
+              <TextField fullWidth label={t('form.platformUrl')} value={formData.platform_url || ''} onChange={(e) => onFieldChange('platform_url', e.target.value)} size="small" placeholder="https://..." />
+              <TextField fullWidth label={t('form.instructor')} value={formData.instructor || ''} onChange={(e) => onFieldChange('instructor', e.target.value)} size="small" />
+              <TextField fullWidth label={t('form.instructorUrl')} value={formData.instructor_url || ''} onChange={(e) => onFieldChange('instructor_url', e.target.value)} size="small" placeholder="https://..." />
+              <TextField fullWidth label={t('form.durationHours')} type="number" value={formData.duration_hours ?? ''} onChange={(e) => onFieldChange('duration_hours', e.target.value ? parseFloat(e.target.value) : undefined)} size="small" />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <VerifiedRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.certificationSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <TextField fullWidth label={t('form.completionDate')} type="date" value={formData.completion_date || ''} onChange={(e) => onFieldChange('completion_date', e.target.value || null)} size="small" InputLabelProps={{ shrink: true }} />
+              <TextField fullWidth label={t('form.expirationDate')} type="date" value={formData.expiration_date || ''} onChange={(e) => onFieldChange('expiration_date', e.target.value || null)} size="small" InputLabelProps={{ shrink: true }} />
+              <TextField fullWidth label={t('form.credentialId')} value={formData.credential_id || ''} onChange={(e) => onFieldChange('credential_id', e.target.value)} size="small" />
+              <TextField fullWidth label={t('form.certificateUrl')} value={formData.certificate_url || ''} onChange={(e) => onFieldChange('certificate_url', e.target.value)} size="small" placeholder="https://..." />
+              <TextField fullWidth label={t('form.certificateImageUrl')} value={formData.certificate_image_url || ''} onChange={(e) => onFieldChange('certificate_image_url', e.target.value)} size="small" placeholder="https://..." />
+              <TextField fullWidth label={t('form.badgeUrl')} value={formData.badge_url || ''} onChange={(e) => onFieldChange('badge_url', e.target.value)} size="small" placeholder="https://..." />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        <Accordion sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CodeRoundedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight={700}>{t('form.skillsSection')}</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+            <Stack spacing={2}>
+              <DynamicList
+                label={t('form.skillsGained')}
+                value={(formData.skills_gained || []) as unknown as Record<string, unknown>[]}
+                onChange={(v) => onFieldChange('skills_gained', v)}
+                emptyItem={{ name: '', category: '' } as Record<string, unknown>}
+                fields={[
+                  { key: 'name', label: t('form.skillName'), placeholder: t('form.skillNamePlaceholder') },
+                  { key: 'category', label: t('form.skillCategory'), placeholder: t('form.skillCategoryPlaceholder') },
+                ]}
+              />
+              <DynamicList
+                label={t('form.syllabus')}
+                value={(formData.syllabus || []) as unknown as Record<string, unknown>[]}
+                onChange={(v) => onFieldChange('syllabus', v)}
+                emptyItem={{ title: '', topics: '', duration_minutes: undefined } as Record<string, unknown>}
+                fields={[
+                  { key: 'title', label: t('form.syllabusTitle'), placeholder: t('form.syllabusTitlePlaceholder') },
+                  { key: 'topics', label: t('form.syllabusTopics'), placeholder: t('form.syllabusTopicsPlaceholder') },
+                  { key: 'duration_minutes', label: t('form.syllabusMinutes'), type: 'number', placeholder: '30' },
+                ]}
+              />
+            </Stack>
           </AccordionDetails>
         </Accordion>
 
@@ -663,7 +760,7 @@ export default function CoursesPage() {
       const res = await courseService.adminGetAll({ limit: 100, include_hidden: true, include_deleted: includeDeleted });
       setItems(res.items);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error loading data');
+      setError(err instanceof Error ? err.message : t('errorLoading'));
     } finally { setLoading(false); }
   }, [includeDeleted]);
 
@@ -672,12 +769,24 @@ export default function CoursesPage() {
   const openCreateForm = () => { setEditingId(null); setFormData(emptyForm); setFormError(null); setShowForm(true); };
   const openEditForm = (item: Course) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, slug: item.slug, description: item.description || '', content: item.content || '', images: item.images || [], metadata: item.metadata || {}, visible: item.visible, order: item.order });
+    setFormData({
+      title: item.title, slug: item.slug || '',
+      is_certification: item.is_certification, category: item.category ?? undefined, level: item.level ?? undefined,
+      description: item.description || '', content: item.content || '',
+      platform: item.platform || '', platform_url: item.platform_url || '',
+      instructor: item.instructor || '', instructor_url: item.instructor_url || '',
+      completion_date: item.completion_date ?? undefined, expiration_date: item.expiration_date ?? undefined,
+      duration_hours: item.duration_hours ?? undefined,
+      credential_id: item.credential_id || '', certificate_url: item.certificate_url || '',
+      certificate_image_url: item.certificate_image_url || '', badge_url: item.badge_url || '',
+      skills_gained: item.skills_gained || [], syllabus: item.syllabus || [],
+      images: item.images || [], metadata: item.metadata || {}, visible: item.visible, order: item.order,
+    });
     setFormError(null); setShowForm(true);
   };
   const closeForm = () => { setShowForm(false); setEditingId(null); setFormData(emptyForm); setFormError(null); setImageUrl(''); setMetaKey(''); setMetaValue(''); };
 
-  const handleFieldChange = (field: keyof FormData, value: string | boolean | number | string[]) =>
+  const handleFieldChange = (field: keyof FormData, value: unknown) =>
     setFormData((p) => ({ ...p, [field]: value }));
 
   const handleTitleChange = (value: string) =>
@@ -700,7 +809,7 @@ export default function CoursesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { setFormError(t('errors.titleRequired')); return; }
-    if (!formData.slug.trim()) { setFormError(t('errors.slugRequired')); return; }
+    if (!formData.slug?.trim()) { setFormError(t('errors.slugRequired')); return; }
     setSaving(true); setFormError(null);
     try {
       if (editingId) await courseService.update(editingId, { ...formData } as CourseUpdate);
@@ -731,7 +840,7 @@ export default function CoursesPage() {
             <MenuBookRoundedIcon sx={{ color: '#fff', fontSize: 22 }} />
           </Box>
         </motion.div>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>Loading courses…</Typography>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>{t('loading')}</Typography>
       </Box>
     );
   }
