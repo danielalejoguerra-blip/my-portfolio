@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${DOCKER_IMAGE:-danielwar/portfolio-frontend:latest}
+    image: ${DOCKER_IMAGE:-danielwar01/portfolio-frontend:latest}
     build:
       context: .
       dockerfile: Dockerfile

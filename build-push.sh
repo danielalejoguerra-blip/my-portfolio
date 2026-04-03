@@ -23,7 +23,7 @@ error()   { echo -e "${RED}[✘]${NC} $*" >&2; exit 1; }
 section() { echo -e "\n${CYAN}══ $* ══${NC}"; }
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IMAGE_NAME="danielwar/portfolio-frontend"
+IMAGE_NAME="danielwar01/portfolio-frontend"
 TAG="${1:-latest}"
 
 cd "$APP_DIR"
