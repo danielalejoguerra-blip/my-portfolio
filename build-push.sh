@@ -26,6 +26,10 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME="danielwar01/portfolio-frontend"
 TAG="${1:-latest}"
 
+# Evita que Git Bash en Windows convierta rutas /foo → C:/Program Files/Git/foo
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL="*"
+
 cd "$APP_DIR"
 
 # ─── Verificar prerequisitos ──────────────────────────────────────────────────

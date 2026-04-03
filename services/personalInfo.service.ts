@@ -61,7 +61,7 @@ export const personalInfoService = {
    * Actualiza un registro existente
    */
   async update(id: number, data: PersonalInfoUpdate): Promise<PersonalInfo> {
-    const response = await api.put<PersonalInfo>(`/personal-info/${id}`, data);
+    const response = await api.put<PersonalInfo>(`/personal-info/admin/${id}`, data);
     return response.data;
   },
 
@@ -69,14 +69,14 @@ export const personalInfoService = {
    * Elimina un registro (soft delete por defecto)
    */
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/personal-info/${id}`, { params: { hard } });
+    await api.delete(`/personal-info/admin/${id}`, { params: { hard } });
   },
 
   /**
    * Restaura un registro soft-deleted
    */
   async restore(id: number): Promise<PersonalInfo> {
-    const response = await api.post<PersonalInfo>(`/personal-info/${id}/restore`);
+    const response = await api.post<PersonalInfo>(`/personal-info/admin/${id}/restore`);
     return response.data;
   },
 };

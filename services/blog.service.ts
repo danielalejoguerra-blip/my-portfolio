@@ -43,16 +43,16 @@ export const blogService = {
   },
 
   async update(id: number, data: BlogPostUpdate): Promise<BlogPost> {
-    const response = await api.put<BlogPost>(`/blog/${id}`, data);
+    const response = await api.put<BlogPost>(`/blog/admin/${id}`, data);
     return response.data;
   },
 
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/blog/${id}`, { params: { hard } });
+    await api.delete(`/blog/admin/${id}`, { params: { hard } });
   },
 
   async restore(id: number): Promise<BlogPost> {
-    const response = await api.post<BlogPost>(`/blog/${id}/restore`);
+    const response = await api.post<BlogPost>(`/blog/admin/${id}/restore`);
     return response.data;
   },
 };

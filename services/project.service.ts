@@ -61,7 +61,7 @@ export const projectService = {
    * Actualiza un proyecto existente
    */
   async update(id: number, data: ProjectUpdate): Promise<Project> {
-    const response = await api.put<Project>(`/projects/${id}`, data);
+    const response = await api.put<Project>(`/projects/admin/${id}`, data);
     return response.data;
   },
 
@@ -69,14 +69,14 @@ export const projectService = {
    * Elimina un proyecto (soft delete por defecto)
    */
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/projects/${id}`, { params: { hard } });
+    await api.delete(`/projects/admin/${id}`, { params: { hard } });
   },
 
   /**
    * Restaura un proyecto soft-deleted
    */
   async restore(id: number): Promise<Project> {
-    const response = await api.post<Project>(`/projects/${id}/restore`);
+    const response = await api.post<Project>(`/projects/admin/${id}/restore`);
     return response.data;
   },
 };

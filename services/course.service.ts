@@ -43,16 +43,16 @@ export const courseService = {
   },
 
   async update(id: number, data: CourseUpdate): Promise<Course> {
-    const response = await api.put<Course>(`/courses/${id}`, data);
+    const response = await api.put<Course>(`/courses/admin/${id}`, data);
     return response.data;
   },
 
   async remove(id: number, hard: boolean = false): Promise<void> {
-    await api.delete(`/courses/${id}`, { params: { hard } });
+    await api.delete(`/courses/admin/${id}`, { params: { hard } });
   },
 
   async restore(id: number): Promise<Course> {
-    const response = await api.post<Course>(`/courses/${id}/restore`);
+    const response = await api.post<Course>(`/courses/admin/${id}/restore`);
     return response.data;
   },
 };
