@@ -9,6 +9,7 @@ LICENSE
 .idea
 nginx/certs
 deploy.sh
+build-push.sh
 docker-compose.yml
 Dockerfile
 .dockerignore

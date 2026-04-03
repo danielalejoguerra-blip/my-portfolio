@@ -8,8 +8,8 @@
 #   - NO se levanta un nginx dentro de Docker (el puerto 80/443 ya lo usa el host)
 #
 # Uso:
-#   bash deploy.sh              → primer despliegue o actualización
-#   bash deploy.sh --no-build   → solo reiniciar contenedor sin rebuild
+#   bash deploy.sh              → primer despliegue o actualización (build en VPS)
+#   bash deploy.sh --no-build   → pull imagen pre-construida + reiniciar
 #   bash deploy.sh --force-build → rebuild sin caché Docker (lento)
 # =============================================================================
 set -euo pipefail
@@ -246,6 +246,10 @@ if [[ "$NO_BUILD" == false ]]; then
   else
     docker compose build
   fi
+else
+  # Si no se buildea localmente, intentar pull por si se construyó desde otra máquina
+  info "Intentando descargar imagen más reciente..."
+  docker compose pull 2>/dev/null && info "Imagen descargada" || warn "No se pudo descargar (se usará la local)"
 fi
 
 info "Levantando contenedor..."
@@ -291,7 +295,8 @@ echo ""
 echo "  Comandos útiles:"
 echo "    Logs en vivo:  docker compose logs -f frontend"
 echo "    Reiniciar:     docker compose restart frontend"
-echo "    Actualizar:    bash $APP_DIR/deploy.sh"
-echo "    Solo restart:  bash $APP_DIR/deploy.sh --no-build"
+echo "    Build en VPS:  bash $APP_DIR/deploy.sh"
+echo "    Solo pull:     bash $APP_DIR/deploy.sh --no-build"
 echo "    Sin caché:     bash $APP_DIR/deploy.sh --force-build"
+echo "    Build local:   bash build-push.sh  (desde tu PC)"
 echo ""
