@@ -29,16 +29,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener CSRF token del header
-    const csrfToken = request.headers.get('X-CSRF-Token');
-    
+    // Obtener CSRF token del header y todas las cookies (incluyendo csrf_token)
+    const csrfToken = request.headers.get('X-CSRF-Token') || '';
+    const cookieHeader = request.headers.get('cookie') || '';
+
     // Hacer request al backend con las cookies
     const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': `access_token=${accessToken}`,
-        ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+        'Cookie': cookieHeader,
+        'X-CSRF-Token': csrfToken,
       },
       body: JSON.stringify(body),
     });
