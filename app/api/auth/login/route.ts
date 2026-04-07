@@ -64,21 +64,25 @@ export async function POST(request: NextRequest) {
     // Parsear y setear cada cookie manualmente para asegurar compatibilidad
     cookies.forEach((cookieString) => {
       const [nameValue, ...attributes] = cookieString.split(';');
-      const [name, value] = nameValue.split('=');
+      // Usar indexOf para dividir solo en el primer '=' y no truncar valores con '=' (base64, JWT, etc.)
+      const firstEq = nameValue.indexOf('=');
+      if (firstEq === -1) return;
+      const cookieName = nameValue.substring(0, firstEq).trim();
+      const cookieValue = nameValue.substring(firstEq + 1).trim();
       
-      if (name && value) {
-        const cookieName = name.trim();
-        const cookieValue = value.trim();
+      if (cookieName && cookieValue) {
         
         // Determinar si es httpOnly basado en el nombre
         const isHttpOnly = cookieName === 'access_token' || cookieName === 'refresh_token';
         
-        // Setear cookie con configuración compatible con localhost
+        // Setear cookie compartida entre dominios (danielwar.tech y api.danielwar.tech)
+        const isProduction = process.env.NODE_ENV === 'production';
         nextResponse.cookies.set(cookieName, cookieValue, {
           httpOnly: isHttpOnly,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax', // Cambiar a 'lax' para localhost
+          secure: isProduction,
+          sameSite: isProduction ? 'none' : 'lax',
           path: '/',
+          domain: isProduction ? '.danielwar.tech' : undefined,
           maxAge: cookieName === 'access_token' ? 600 : 1209600, // 10min o 14 días
         });
       }

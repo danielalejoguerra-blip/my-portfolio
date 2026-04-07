@@ -49,14 +49,28 @@ export async function POST(request: NextRequest) {
     // Crear response con los datos
     const nextResponse = NextResponse.json(data, { status: 200 });
 
-    // Copiar las nuevas cookies del backend
-    const setCookieHeader = response.headers.get('set-cookie');
-    if (setCookieHeader) {
-      const cookies = setCookieHeader.split(/,(?=\s*\w+=)/);
-      cookies.forEach((cookie) => {
-        nextResponse.headers.append('Set-Cookie', cookie.trim());
-      });
-    }
+    // Copiar las nuevas cookies del backend usando getSetCookie() para obtener todas
+    const isProduction = process.env.NODE_ENV === 'production';
+    const setCookies = response.headers.getSetCookie?.() || [];
+    setCookies.forEach((cookieString) => {
+      const [nameValue] = cookieString.split(';');
+      const firstEq = nameValue.indexOf('=');
+      if (firstEq === -1) return;
+      const cookieName = nameValue.substring(0, firstEq).trim();
+      const cookieValue = nameValue.substring(firstEq + 1).trim();
+
+      if (cookieName && cookieValue) {
+        const isHttpOnly = cookieName === 'access_token' || cookieName === 'refresh_token';
+        nextResponse.cookies.set(cookieName, cookieValue, {
+          httpOnly: isHttpOnly,
+          secure: isProduction,
+          sameSite: isProduction ? 'none' : 'lax',
+          path: '/',
+          domain: isProduction ? '.danielwar.tech' : undefined,
+          maxAge: cookieName === 'access_token' ? 600 : 1209600,
+        });
+      }
+    });
 
     return nextResponse;
   } catch (error) {

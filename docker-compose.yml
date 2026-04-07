@@ -20,7 +20,11 @@ services:
       - "127.0.0.1:3001:3000"
     networks:
       - portfolio-net
+      - backend_default
 
 networks:
   portfolio-net:
     driver: bridge
+  backend_default:
+    external: true
+    name: portfolio_backend_default
