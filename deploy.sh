@@ -102,6 +102,11 @@ info ".env ok"
 # ─── 4. Configurar nginx del host ─────────────────────────────────────────────
 section "Configurando nginx del host"
 
+# Si nginx corre en Docker (no como servicio del host), saltamos esta sección
+if ! sudo systemctl is-active --quiet nginx 2>/dev/null; then
+  warn "Nginx no está activo como servicio del host (probablemente corre en Docker). Saltando configuración nginx."
+else
+
 # Si aún no hay certificado, escribir config HTTP-only para que certbot pueda validar
 if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
   warn "Sin certificado SSL — configurando nginx en modo HTTP para obtenerlo..."
@@ -234,6 +239,8 @@ if sudo nginx -t 2>&1; then
 else
   error "Nginx config inválida. Revisa $NGINX_SITE"
 fi
+
+fi  # fin del bloque: nginx corriendo como servicio del host
 
 # ─── 6. Build y despliegue Docker ─────────────────────────────────────────────
 section "Desplegando contenedor Docker"
