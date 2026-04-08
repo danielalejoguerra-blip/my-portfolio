@@ -48,7 +48,14 @@ export async function POST(request: NextRequest) {
       credentials: 'include',
     });
 
-    const data = await response.json();
+    let data: unknown;
+    const backendContentType = response.headers.get('content-type') || '';
+    if (backendContentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { message: text || 'Error del servidor' };
+    }
 
     // Si hay error del backend, retornarlo
     if (!response.ok) {

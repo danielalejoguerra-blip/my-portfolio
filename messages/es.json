@@ -151,7 +151,8 @@
     "featured": "Destacado",
     "readingTimeMin": "min",
     "read": "Leer",
-    "readPost": "Leer artículo"
+    "readPost": "Leer artículo",
+    "emptyDescription": "Próximamente nuevos artículos."
   },
   "blogDetail": {
     "backToBlog": "Volver al blog",
