@@ -72,6 +72,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Capturar CSRF token del header de respuesta del backend (más fiable que la cookie cross-origin)
+    const csrfTokenFromHeader = response.headers.get('X-CSRF-Token');
+    if (csrfTokenFromHeader) {
+      nextResponse.cookies.set('csrf_token', csrfTokenFromHeader, {
+        httpOnly: false, // debe ser legible por JS (js-cookie)
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        path: '/',
+        domain: isProduction ? '.danielwar.tech' : undefined,
+        maxAge: 1209600,
+      });
+    }
+
     return nextResponse;
   } catch (error) {
     console.error('Refresh error:', error);
