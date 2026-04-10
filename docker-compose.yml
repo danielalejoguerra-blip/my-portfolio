@@ -32,8 +32,8 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
+      - portfolio_backend_certbot_certs:/etc/letsencrypt:ro
+      - portfolio_backend_certbot_www:/var/www/certbot:ro
     depends_on:
       - frontend
     networks:
@@ -45,3 +45,11 @@ networks:
   backend_default:
     external: true
     name: portfolio_backend_default
+
+volumes:
+  portfolio_backend_certbot_certs:
+    external: true
+    name: portfolio_backend_certbot_certs
+  portfolio_backend_certbot_www:
+    external: true
+    name: portfolio_backend_certbot_www

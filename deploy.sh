@@ -27,7 +27,7 @@ DOMAIN="danielwar.tech"
 FRONTEND_PORT="3001"
 NGINX_SITE="/etc/nginx/sites-available/${DOMAIN}"
 NGINX_ENABLED="/etc/nginx/sites-enabled/${DOMAIN}"
-CERT_PATH="/etc/letsencrypt/live/${DOMAIN}"
+CERT_PATH="/var/lib/docker/volumes/portfolio_backend_certbot_certs/_data/live/${DOMAIN}"
 NO_BUILD=false
 FORCE_BUILD=false
 
