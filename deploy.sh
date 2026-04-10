@@ -99,148 +99,19 @@ for var in "${REQUIRED_VARS[@]}"; do
 done
 info ".env ok"
 
-# ─── 4. Configurar nginx del host ─────────────────────────────────────────────
-section "Configurando nginx del host"
-
-# Si nginx corre en Docker (no como servicio del host), saltamos esta sección
-if ! sudo systemctl is-active --quiet nginx 2>/dev/null; then
-  warn "Nginx no está activo como servicio del host (probablemente corre en Docker). Saltando configuración nginx."
-else
-
-# Si aún no hay certificado, escribir config HTTP-only para que certbot pueda validar
-if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
-  warn "Sin certificado SSL — configurando nginx en modo HTTP para obtenerlo..."
-  sudo mkdir -p /var/www/certbot
-  sudo tee "$NGINX_SITE" > /dev/null << NGINXHTTP
-# Generado por deploy.sh (bootstrap) — $(date)
-server {
-    listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
-    location / {
-        return 200 'bootstrapping';
-        add_header Content-Type text/plain;
-    }
-}
-NGINXHTTP
-
-  if [[ ! -L "$NGINX_ENABLED" ]]; then
-    sudo ln -sf "$NGINX_SITE" "$NGINX_ENABLED"
-  fi
-
-  sudo nginx -t 2>&1 && sudo systemctl reload nginx
-
-  # ─── 5. Obtener certificado SSL por primera vez ────────────────────────────
-  section "Obteniendo certificado SSL (primera vez)"
-  command -v certbot &>/dev/null || error "certbot no está instalado. Instálalo con: sudo apt install certbot python3-certbot-nginx"
-  sudo certbot certonly --webroot -w /var/www/certbot \
-    -d "${DOMAIN}" -d "www.${DOMAIN}" \
-    --cert-name "${DOMAIN}" \
-    --non-interactive --agree-tos --email "admin@${DOMAIN}" \
-    || error "certbot falló. Asegúrate de que el DNS de ${DOMAIN} apunte a este servidor."
-  info "Certificado obtenido correctamente"
-fi
-
-# ─── Verificar certificado (con detección dinámica de path) ──────────────────
+# ─── 4. Verificar certificados SSL ──────────────────────────────────────────
 section "Verificando certificados SSL"
 
-if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
-  # certbot puede haber guardado el cert bajo otro nombre (ej. danielwar.tech-0001)
-  FOUND=$(sudo find /etc/letsencrypt/live/ -name "fullchain.pem" 2>/dev/null \
-    | grep -i "${DOMAIN}" | head -1 || true)
-  if [[ -n "$FOUND" ]]; then
-    CERT_PATH="$(dirname "$FOUND")"
-    warn "Certificado encontrado en path alternativo: $CERT_PATH"
-  else
-    error "No se encontró certificado para $DOMAIN. Ejecuta: sudo certbot certificates"
-  fi
+# Los certificados están en el host y se montan como volumen en el contenedor nginx
+if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
+  warn "No se encontró certificado en ${CERT_PATH}"
+  warn "Obtén el certificado primero:"
+  warn "  sudo apt install certbot"
+  warn "  sudo certbot certonly --standalone -d ${DOMAIN} -d www.${DOMAIN}"
+  error "Certificado SSL requerido para continuar."
 fi
-
-EXPIRY=$(sudo openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
+EXPIRY=$(openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
 info "Certificado válido hasta: $EXPIRY"
-
-# ─── Escribir config nginx completa con SSL ───────────────────────────────────
-section "Aplicando configuración nginx con SSL"
-
-sudo tee "$NGINX_SITE" > /dev/null << NGINXCONF
-# Generado por deploy.sh — $(date)
-# Frontend: Next.js en Docker puerto ${FRONTEND_PORT}
-
-server {
-    listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
-    location / {
-        return 301 https://\$host\$request_uri;
-    }
-}
-
-server {
-    listen 443 ssl;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    ssl_certificate     ${CERT_PATH}/fullchain.pem;
-    ssl_certificate_key ${CERT_PATH}/privkey.pem;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
-    ssl_session_cache   shared:SSL:10m;
-    ssl_session_timeout 10m;
-
-    add_header X-Frame-Options           "SAMEORIGIN"  always;
-    add_header X-Content-Type-Options    "nosniff"     always;
-    add_header X-XSS-Protection          "1; mode=block" always;
-    add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript
-               text/xml application/xml image/svg+xml;
-    gzip_min_length 1000;
-
-    location /_next/static/ {
-        proxy_pass http://127.0.0.1:${FRONTEND_PORT}/_next/static/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        access_log off;
-    }
-
-    location / {
-        proxy_pass         http://127.0.0.1:${FRONTEND_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header   Upgrade           \$http_upgrade;
-        proxy_set_header   Connection        "upgrade";
-        proxy_set_header   Host              \$host;
-        proxy_set_header   X-Real-IP         \$remote_addr;
-        proxy_set_header   X-Forwarded-For   \$proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 60s;
-    }
-}
-NGINXCONF
-
-# Activar site si no está activado
-if [[ ! -L "$NGINX_ENABLED" ]]; then
-  sudo ln -sf "$NGINX_SITE" "$NGINX_ENABLED"
-  info "Site habilitado en sites-enabled"
-fi
-
-# Test y reload
-if sudo nginx -t 2>&1; then
-  sudo systemctl reload nginx
-  info "Nginx recargado correctamente"
-else
-  error "Nginx config inválida. Revisa $NGINX_SITE"
-fi
-
-fi  # fin del bloque: nginx corriendo como servicio del host
 
 # ─── 6. Build y despliegue Docker ─────────────────────────────────────────────
 section "Desplegando contenedor Docker"
@@ -265,19 +136,20 @@ docker compose up -d --remove-orphans
 # ─── 7. Health check ──────────────────────────────────────────────────────────
 section "Verificando despliegue"
 
-info "Esperando que Next.js arranque..."
-MAX_WAIT=60
+info "Esperando que los contenedores arranquen..."
+MAX_WAIT=90
 ELAPSED=0
-until curl -sf "http://127.0.0.1:${FRONTEND_PORT}" -o /dev/null 2>&1; do
+# Health check al contenedor frontend directamente (sin pasar por nginx)
+until docker compose exec -T frontend wget -qO- http://localhost:3000 &>/dev/null; do
   if [[ $ELAPSED -ge $MAX_WAIT ]]; then
-    warn "El servicio no respondió en ${MAX_WAIT}s. Revisa los logs:"
+    warn "El contenedor no respondió en ${MAX_WAIT}s. Revisa los logs:"
     docker compose logs --tail=30 frontend
     error "Health check fallido."
   fi
-  sleep 2
-  ELAPSED=$((ELAPSED + 2))
+  sleep 3
+  ELAPSED=$((ELAPSED + 3))
 done
-info "Servicio respondiendo en http://127.0.0.1:${FRONTEND_PORT}"
+info "Contenedor frontend respondiendo"
 
 docker compose ps
 
@@ -285,7 +157,8 @@ docker compose ps
 docker image prune -f > /dev/null 2>&1 || true
 
 # ─── 9. Cron de renovación SSL ────────────────────────────────────────────────
-CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
+# certbot renueva en el host; tras renovar, recarga el contenedor nginx
+CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'docker compose -f ${APP_DIR}/docker-compose.yml restart nginx'"
 ( crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "$CRON_CMD" ) | crontab -
 info "Cron de renovación SSL configurado"
 
