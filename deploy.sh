@@ -103,14 +103,14 @@ info ".env ok"
 section "Verificando certificados SSL"
 
 # Los certificados están en el host y se montan como volumen en el contenedor nginx
-if [[ ! -f "${CERT_PATH}/fullchain.pem" ]]; then
+if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
   warn "No se encontró certificado en ${CERT_PATH}"
   warn "Obtén el certificado primero:"
   warn "  sudo apt install certbot"
   warn "  sudo certbot certonly --standalone -d ${DOMAIN} -d www.${DOMAIN}"
   error "Certificado SSL requerido para continuar."
 fi
-EXPIRY=$(openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
+EXPIRY=$(sudo openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
 info "Certificado válido hasta: $EXPIRY"
 
 # ─── 6. Build y despliegue Docker ─────────────────────────────────────────────
