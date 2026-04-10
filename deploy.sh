@@ -25,9 +25,6 @@ section() { echo -e "\n${CYAN}══ $* ══${NC}"; }
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOMAIN="danielwar.tech"
 FRONTEND_PORT="3001"
-NGINX_SITE="/etc/nginx/sites-available/${DOMAIN}"
-NGINX_ENABLED="/etc/nginx/sites-enabled/${DOMAIN}"
-CERT_PATH="/var/lib/docker/volumes/portfolio_backend_certbot_certs/_data/live/${DOMAIN}"
 NO_BUILD=false
 FORCE_BUILD=false
 
@@ -99,21 +96,7 @@ for var in "${REQUIRED_VARS[@]}"; do
 done
 info ".env ok"
 
-# ─── 4. Verificar certificados SSL ──────────────────────────────────────────
-section "Verificando certificados SSL"
-
-# Los certificados están en el host y se montan como volumen en el contenedor nginx
-if ! sudo test -f "${CERT_PATH}/fullchain.pem"; then
-  warn "No se encontró certificado en ${CERT_PATH}"
-  warn "Obtén el certificado primero:"
-  warn "  sudo apt install certbot"
-  warn "  sudo certbot certonly --standalone -d ${DOMAIN} -d www.${DOMAIN}"
-  error "Certificado SSL requerido para continuar."
-fi
-EXPIRY=$(sudo openssl x509 -enddate -noout -in "${CERT_PATH}/fullchain.pem" | cut -d= -f2)
-info "Certificado válido hasta: $EXPIRY"
-
-# ─── 6. Build y despliegue Docker ─────────────────────────────────────────────
+# ─── 4. Build y despliegue Docker ─────────────────────────────────────────────
 section "Desplegando contenedor Docker"
 
 if [[ "$NO_BUILD" == false ]]; then
@@ -155,12 +138,6 @@ docker compose ps
 
 # ─── 8. Limpieza ──────────────────────────────────────────────────────────────
 docker image prune -f > /dev/null 2>&1 || true
-
-# ─── 9. Cron de renovación SSL ────────────────────────────────────────────────
-# certbot renueva en el host; tras renovar, recarga el contenedor nginx
-CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'docker compose -f ${APP_DIR}/docker-compose.yml restart nginx'"
-( crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "$CRON_CMD" ) | crontab -
-info "Cron de renovación SSL configurado"
 
 # ─── Resumen ──────────────────────────────────────────────────────────────────
 echo ""
