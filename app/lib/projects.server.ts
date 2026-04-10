@@ -38,6 +38,28 @@ export async function getPublicProjects(limit: number = 20, lang?: string): Prom
 }
 
 /**
+ * Obtiene todos los slugs de proyectos publicados.
+ * Usado en generateStaticParams para pre-construir páginas de detalle.
+ */
+export async function getPublicProjectSlugs(): Promise<string[]> {
+  try {
+    const response = await fetch(
+      `${API_URL}/projects?limit=100&offset=0`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        next: { revalidate: 3600 },
+      }
+    );
+    if (!response.ok) return [];
+    const data: ProjectListResponse = await response.json();
+    return (data.items || []).map((p) => p.slug).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Obtiene un proyecto por slug.
  * Se usa desde Server Components para SSR.
  * Retorna null si no se encuentra o el backend no está disponible.

@@ -21,6 +21,8 @@ export interface PersonalInfo {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  translations: Record<string, unknown>;
+  lang: string;
 }
 
 // Datos para crear un registro

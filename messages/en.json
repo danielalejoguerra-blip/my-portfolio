@@ -4,7 +4,11 @@
     "role": "Full Stack Developer",
     "description": "Passionate developer creating exceptional digital experiences. Specialized in <react>React</react>, <nodejs>Node.js</nodejs> and <typescript>TypeScript</typescript>.",
     "viewProjects": "View Projects",
-    "contactMe": "Contact Me"
+    "contactMe": "Contact Me",
+    "downloadCV": "Download CV",
+    "statsYears": "Years of exp.",
+    "statsProjects": "Projects",
+    "statsTechs": "Technologies"
   },
   "about": {
     "title": "About Me",

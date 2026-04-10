@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
+        next: { revalidate: 300 },
       }
     );
 
@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(data, {
+      status: 200,
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
+    });
   } catch (error) {
     console.error('Personal info GET error:', error);
     return NextResponse.json(

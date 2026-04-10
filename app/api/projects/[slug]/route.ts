@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const response = await fetch(`${API_URL}/projects/${slug}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
+      next: { revalidate: 300 },
     });
 
     const data = await response.json();
@@ -29,7 +29,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(data, {
+      status: 200,
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
+    });
   } catch (error) {
     console.error('Projects GET by slug error:', error);
     return NextResponse.json(

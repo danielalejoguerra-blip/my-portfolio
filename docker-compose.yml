@@ -16,11 +16,28 @@ services:
     environment:
       - NODE_ENV=production
       - REACT_API_HOST=${REACT_API_HOST}
-    ports:
-      - "127.0.0.1:3001:3000"
+    # Puerto solo expuesto al host para debugging local; nginx lo alcanza por red interna
+    expose:
+      - "3000"
     networks:
       - portfolio-net
       - backend_default
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: portfolio-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - frontend
+    networks:
+      - portfolio-net
 
 networks:
   portfolio-net:

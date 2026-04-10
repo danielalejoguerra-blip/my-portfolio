@@ -15,12 +15,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const lang = searchParams.get('lang') || '';
     const langParam = lang ? `?lang=${encodeURIComponent(lang)}` : '';
     const response = await fetch(`${API_URL}/blog/${slug}${langParam}`, {
-      method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      method: 'GET', headers: { 'Content-Type': 'application/json' }, next: { revalidate: 300 },
     });
 
     const data = await response.json();
     if (!response.ok) return NextResponse.json(data, { status: response.status });
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(data, {
+      status: 200,
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
+    });
   } catch (error) {
     console.error('Blog GET by slug error:', error);
     return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });

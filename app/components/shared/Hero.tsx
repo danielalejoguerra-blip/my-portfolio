@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, Github, Linkedin, Mail, Sparkles } from "lucide-react";
+import { ArrowDown, Download, Github, Linkedin, Mail, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Button from "@/app/components/ui/Button";
@@ -36,6 +36,12 @@ export default function Hero({ personalInfo }: HeroProps) {
   const linkedinUrl = socialLinks.linkedin || "https://linkedin.com/in/daniel-guerra-197551301";
   const emailAddress = personalInfo?.email || "danielalejoguerra@gmail.com";
   const avatarUrl = personalInfo?.avatar_url || null;
+  const headline = personalInfo?.headline || t("role");
+  const resumeUrl = personalInfo?.resume_url || null;
+  const metadata = (personalInfo?.metadata || {}) as Record<string, unknown>;
+  const statsYears = typeof metadata.years_experience === "number" ? `${metadata.years_experience}+` : "1+";
+  const statsProjects = typeof metadata.projects_count === "number" ? `${metadata.projects_count}+` : "3+";
+  const statsTechs = typeof metadata.technologies_count === "number" ? `${metadata.technologies_count}+` : "10+";
 
   return (
     <section className="relative h-screen flex flex-col pt-20">
@@ -121,7 +127,7 @@ export default function Hero({ personalInfo }: HeroProps) {
               >
                 <Sparkles className="w-5 h-5 text-[var(--accent)]" />
                 <h2 className="text-xl sm:text-2xl font-semibold text-[var(--muted-foreground)]">
-                  {t("role")}
+                  {headline}
                 </h2>
               </motion.div>
 
@@ -144,7 +150,7 @@ export default function Hero({ personalInfo }: HeroProps) {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="flex flex-row gap-3 justify-center lg:justify-start items-center mb-6 lg:mb-8"
+                className="flex flex-wrap gap-3 justify-center lg:justify-start items-center mb-3 lg:mb-4"
               >
                 <Button size="lg" onClick={() => document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" })}>
                   {t("viewProjects")}
@@ -152,6 +158,38 @@ export default function Hero({ personalInfo }: HeroProps) {
                 <Button variant="outline" size="lg" onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}>
                   {t("contactMe")}
                 </Button>
+                {resumeUrl && (
+                  <a
+                    href={resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg text-base font-medium border border-dashed border-(--border) text-(--muted-foreground) hover:border-(--primary)/60 hover:text-(--primary) transition-all duration-200"
+                  >
+                    <Download className="w-4 h-4" />
+                    {t("downloadCV")}
+                  </a>
+                )}
+              </motion.div>
+
+              {/* Stats */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                className="flex justify-center lg:justify-start items-center gap-6 py-1"
+              >
+                {[
+                  { number: statsYears, label: t("statsYears") },
+                  { number: statsProjects, label: t("statsProjects") },
+                  { number: statsTechs, label: t("statsTechs") },
+                ].map(({ number, label }, i) => (
+                  <div key={i} className="flex flex-col items-center lg:items-start gap-0.5">
+                    <span className="text-xl font-bold bg-linear-to-r from-(--gradient-start) to-(--accent) bg-clip-text text-transparent leading-none">
+                      {number}
+                    </span>
+                    <span className="text-xs text-(--muted-foreground)">{label}</span>
+                  </div>
+                ))}
               </motion.div>
 
               {/* Social links */}

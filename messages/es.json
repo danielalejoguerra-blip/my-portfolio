@@ -4,7 +4,11 @@
     "role": "Desarrollador Full Stack",
     "description": "Desarrollador apasionado por crear experiencias digitales excepcionales. Especializado en <react>React</react>, <nodejs>Node.js</nodejs> y <typescript>TypeScript</typescript>.",
     "viewProjects": "Ver Proyectos",
-    "contactMe": "Contáctame"
+    "contactMe": "Contáctame",
+    "downloadCV": "Descargar CV",
+    "statsYears": "Años de exp.",
+    "statsProjects": "Proyectos",
+    "statsTechs": "Tecnologías"
   },
   "about": {
     "title": "Sobre Mí",

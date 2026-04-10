@@ -16,6 +16,7 @@ import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/app/components/ui";
+import { getShimmerDataURL, normalizeImageUrl } from "@/app/lib/utils";
 import type { Project } from "@/types";
 
 interface ProjectDetailProps {
@@ -27,17 +28,14 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
   const locale = useLocale();
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
-  const metadata = (project.metadata as Record<string, unknown>) || {};
-  const links = (metadata.links as Record<string, string>) || {};
-  const technologies = Array.isArray(metadata.tech_stack)
-    ? (metadata.tech_stack as string[])
-    : [];
-  const github = links.github || null;
-  const live = links.demo || null;
-  const docs = links.docs || null;
-  const category = (metadata.category as string) || null;
-  const status = (metadata.status as string) || null;
-  const images = project.images || [];
+  const technologies = project.tech_stack || [];
+  const github = project.repository_url || null;
+  const live = project.project_url || null;
+  const docs = project.documentation_url || null;
+  const category = project.category || null;
+  const status = project.status || null;
+  const images = (project.images || []).map(normalizeImageUrl);
+  const shimmerUrl = getShimmerDataURL();
 
   const openLightbox = (index: number) => setSelectedImage(index);
   const closeLightbox = () => setSelectedImage(null);
@@ -84,6 +82,8 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
               className="object-cover"
               sizes="(max-width: 1200px) 100vw, 1024px"
               priority
+              placeholder="blur"
+              blurDataURL={shimmerUrl}
             />
           </motion.div>
         </div>
@@ -158,8 +158,8 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
           {technologies.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-8">
               {technologies.map((tech) => (
-                <Badge key={tech} variant="primary">
-                  {tech}
+                <Badge key={tech.name} variant="primary">
+                  {tech.name}
                 </Badge>
               ))}
             </div>
@@ -206,6 +206,8 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
                       fill
                       className="object-cover hover:scale-105 transition-transform duration-300"
                       sizes="(max-width: 768px) 50vw, 33vw"
+                      placeholder="blur"
+                      blurDataURL={shimmerUrl}
                     />
                   </motion.div>
                 ))}
@@ -254,21 +256,22 @@ export default function ProjectDetail({ project }: ProjectDetailProps) {
               </>
             )}
 
-            {/* Image */}
+            {/* Image — native img: no server-side optimization needed for full-size lightbox */}
             <motion.div
               key={selectedImage}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-[90vw] h-[80vh] max-w-6xl"
+              className="flex items-center justify-center w-[90vw] h-[80vh] max-w-6xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={images[selectedImage]}
                 alt={`${project.title} - ${selectedImage + 1}`}
-                fill
-                className="object-contain"
-                sizes="90vw"
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+                loading="eager"
+                decoding="async"
               />
             </motion.div>
 

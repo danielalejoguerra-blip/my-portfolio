@@ -16,6 +16,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/app/components/ui";
+import { getShimmerDataURL } from "@/app/lib/utils";
 import type { BlogPost } from "@/types";
 
 interface BlogDetailProps {
@@ -27,13 +28,13 @@ export default function BlogDetail({ post }: BlogDetailProps) {
   const t = useTranslations("blogDetail");
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
-  const metadata = (post.metadata as Record<string, unknown>) || {};
-  const tags = Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [];
-  const category = (metadata.category as string) || null;
-  const readingTime = (metadata.reading_time as number) || null;
-  const featured = (metadata.featured as boolean) || false;
-  const canonicalUrl = (metadata.canonical_url as string) || null;
+  const tags = post.tags || [];
+  const category = post.category || null;
+  const readingTime = post.reading_time_minutes || null;
+  const featured = post.featured ?? false;
+  const canonicalUrl = post.canonical_url || null;
   const images = post.images || [];
+  const shimmerUrl = getShimmerDataURL();
 
   const publishDate = post.published_at || post.created_at;
   const formattedDate = new Date(publishDate).toLocaleDateString(locale, {
@@ -72,6 +73,8 @@ export default function BlogDetail({ post }: BlogDetailProps) {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 768px"
               priority
+              placeholder="blur"
+              blurDataURL={shimmerUrl}
             />
             {featured && (
               <div className="absolute top-4 left-4">
@@ -177,6 +180,8 @@ export default function BlogDetail({ post }: BlogDetailProps) {
                       fill
                       className="object-cover hover:scale-105 transition-transform duration-300"
                       sizes="(max-width: 768px) 50vw, 33vw"
+                      placeholder="blur"
+                      blurDataURL={shimmerUrl}
                     />
                   </motion.div>
                 ))}
@@ -243,6 +248,8 @@ export default function BlogDetail({ post }: BlogDetailProps) {
                 fill
                 className="object-contain"
                 sizes="100vw"
+                placeholder="blur"
+                blurDataURL={shimmerUrl}
               />
             </motion.div>
 

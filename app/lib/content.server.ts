@@ -51,6 +51,26 @@ export async function getPublicBlog(limit: number = 20, lang?: string): Promise<
   return items.filter((item) => !item.deleted_at);
 }
 
+/**
+ * Obtiene todos los slugs de posts publicados.
+ * Usado en generateStaticParams para pre-construir páginas de detalle.
+ */
+export async function getPublicBlogSlugs(): Promise<string[]> {
+  try {
+    if (!API_URL) return [];
+    const response = await fetch(`${API_URL}/blog?limit=100&offset=0`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return ((data.items || []) as BlogPost[]).map((p) => p.slug).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 export async function getPublicBlogBySlug(slug: string, lang?: string): Promise<BlogPost | null> {
   try {
     if (!API_URL) return null;

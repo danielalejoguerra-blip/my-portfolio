@@ -28,8 +28,25 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const backendOrigin = (() => {
+    try {
+      const url = process.env.NEXT_PUBLIC_BACKEND_URL;
+      return url ? new URL(url).origin : null;
+    } catch {
+      return null;
+    }
+  })();
+
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        {backendOrigin && (
+          <>
+            <link rel="preconnect" href={backendOrigin} />
+            <link rel="dns-prefetch" href={backendOrigin} />
+          </>
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
